@@ -1,0 +1,60 @@
+.verification-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.verify-icon {
+  background: #f1f5f9;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 15px;
+}
+
+.transaction-summary {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.transaction-summary p { margin: 0; color: #64748b; font-size: 0.9rem; }
+.transaction-summary h3 { margin: 5px 0 0; color: #003366; font-size: 1.5rem; }
+
+.code-input {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  outline: none;
+}
+.code-input:focus { border-color: #003366; }
+
+.hint { font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 20px; }
+
+.verify-btn {
+  width: 100%;
+  background: #003366;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.error-msg {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  background: #fef2f2;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -1,0 +1,250 @@
+.detail-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  /* backdrop-filter: blur(4px); */
+}
+
+.detail-modal-content {
+  background: white;
+  width: 100%; max-width: 900px;
+  max-height: 90vh;
+  border-radius: 20px;
+  position: relative;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-close-btn {
+  position: absolute; top: 15px; right: 15px;
+  background: rgba(0,0,0,0.05); border: none;
+  width: 40px; height: 40px; border-radius: 50%;
+  cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center;
+}
+.detail-close-btn:hover { background: #fee2e2; color: red; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+}
+
+/* Gallery Styles */
+.detail-gallery {
+  background: #f8fafc;
+  padding: 30px;
+  display: flex; flex-direction: column; gap: 15px;
+  align-items: center; justify-content: center;
+}
+
+.main-image-frame {
+  width: 100%; height: 400px;
+  display: flex; align-items: center; justify-content: center;
+  background: white; border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  padding: 10px;
+}
+
+.main-image-frame img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+}
+
+.thumbnail-row {
+  display: flex; gap: 10px; overflow-x: auto; width: 100%; padding-bottom: 5px;
+}
+
+.thumbnail-row img {
+  width: 70px; height: 70px; object-fit: cover;
+  border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+  background: white;
+}
+
+.thumbnail-row img.active { border-color: #003366; }
+
+/* Info Styles */
+.detail-info { padding: 40px; }
+
+.detail-header {
+  display: flex; justify-content: space-between; margin-bottom: 15px;
+  color: #64748b; font-size: 0.85rem;
+}
+.detail-category { display: flex; align-items: center; gap: 5px; text-transform: uppercase; font-weight: 700; color: #003366; }
+
+.detail-info h1 {
+  font-size: 2rem; margin: 0 0 15px 0; color: #1e293b; line-height: 1.2;
+}
+
+.detail-price-box {
+  font-size: 2rem; color: #003366; font-weight: 800; margin-bottom: 20px;
+}
+.currency { font-size: 1.2rem; vertical-align: top; }
+
+.detail-tags { display: flex; gap: 10px; margin-bottom: 25px; }
+.tag {
+  padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+  display: flex; align-items: center; gap: 5px;
+}
+.tag.condition { background: #fef3c7; color: #92400e; }
+.tag.location { background: #f1f5f9; color: #475569; }
+
+.detail-description h3 { font-size: 1rem; margin-bottom: 8px; }
+.detail-description p { color: #475569; line-height: 1.6; font-size: 0.95rem; }
+
+.seller-badge {
+  display: flex; align-items: center; gap: 12px;
+  background: #f8fafc; padding: 12px; border-radius: 12px;
+  margin: 30px 0; border: 1px solid #e2e8f0;
+}
+.seller-avatar {
+  background: #cbd5e1; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; color: white;
+}
+.seller-name { font-weight: 700; margin: 0; color: #1e293b; }
+.seller-label { margin: 0; font-size: 0.75rem; color: #64748b; }
+.verified-badge {
+  margin-left: auto; color: #166534; font-size: 0.8rem; font-weight: 700;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.buy-now-large-btn {
+  width: 100%; background: #003366; color: white; border: none;
+  padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: 700;
+  cursor: pointer; transition: background 0.2s;
+}
+.buy-now-large-btn:hover { background: #C62828; }
+
+@media (max-width: 768px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-gallery { padding: 20px; }
+  .main-image-frame { height: 250px; }
+  .detail-info { padding: 25px; }
+}
+
+
+.qa-section {
+  margin-top: 30px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.qa-section h3 {
+  display: flex; align-items: center; gap: 8px; font-size: 1.1rem; color: #1e293b;
+}
+
+.ask-box {
+  display: flex; gap: 10px; margin-bottom: 20px;
+}
+.ask-box input {
+  flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;
+}
+.ask-box button {
+  background: #003366; color: white; border: none; width: 40px; border-radius: 8px; cursor: pointer;
+}
+
+.questions-list {
+  display: flex; flex-direction: column; gap: 15px; max-height: 200px; overflow-y: auto;
+}
+
+.qa-item { font-size: 0.9rem; }
+
+.question-bubble {
+  background: #f1f5f9; padding: 8px 12px; border-radius: 8px 8px 8px 0;
+  color: #334155; margin-bottom: 5px; display: inline-block;
+}
+
+.answer-bubble {
+  margin-left: 20px;
+  color: #166534; /* Green for seller */
+  display: flex; align-items: center; gap: 5px;
+  font-weight: 500;
+}
+
+.reply-trigger {
+  margin-left: 10px; font-size: 0.75rem; color: #003366; background: none; border: none; cursor: pointer; text-decoration: underline;
+}
+
+/* ... existing styles ... */
+
+.detail-modal-content {
+  /* Added hidden overflow to main container */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-scroll-area {
+  /* Allow the inside to scroll, including similar items at bottom */
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+/* Similar Items UI */
+.similar-items-section {
+  padding: 30px 40px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.similar-items-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.similar-items-scroll {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 10px; /* Space for scrollbar */
+}
+
+/* Hide scrollbar for cleaner look (optional) */
+.similar-items-scroll::-webkit-scrollbar { height: 6px; }
+.similar-items-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.similar-card {
+  min-width: 160px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.similar-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border-color: #003366;
+}
+
+.similar-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.sim-details {
+  padding: 10px;
+}
+
+.sim-title {
+  font-size: 0.85rem;
+  color: #475569;
+  margin-bottom: 5px;
+}
+
+.sim-price {
+  font-weight: 800;
+  color: #003366;
+  font-size: 1rem;
+}

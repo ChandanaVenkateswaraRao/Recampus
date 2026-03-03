@@ -1,0 +1,49 @@
+:root {
+  --primary: #003366;    /* KLU Deep Blue */
+  --accent: #C62828;     /* KLU Crimson */
+  --bg-light: #F8FAFC;
+  --text-dark: #1E293B;
+  --white: #FFFFFF;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+button { cursor: pointer; transition: all 0.2s; }
+
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.content-area {
+  flex: 1;
+  background-color: #f8fafc;
+}
+.loading-screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+}
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #003366;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

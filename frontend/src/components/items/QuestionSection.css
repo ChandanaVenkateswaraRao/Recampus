@@ -1,0 +1,57 @@
+.qa-container {
+  margin-top: 40px;
+  border-top: 2px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.qa-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.2rem; color: #1e293b; margin-bottom: 20px;
+}
+
+/* Ask Box (Buyer) */
+.ask-question-box {
+  display: flex; gap: 10px; margin-bottom: 30px;
+}
+
+.ask-question-box input {
+  flex: 1; padding: 12px 15px; border: 1px solid #cbd5e1;
+  border-radius: 8px; outline: none; font-size: 0.95rem;
+  background: #f8fafc; transition: 0.2s;
+}
+
+.ask-question-box input:focus { border-color: #003366; background: white; }
+
+.ask-question-box button {
+  background: #003366; color: white; border: none;
+  padding: 0 20px; border-radius: 8px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+}
+
+.no-questions { color: #94a3b8; font-style: italic; font-size: 0.9rem; }
+
+/* The Thread */
+.qa-list { display: flex; flex-direction: column; gap: 20px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+
+.qa-thread { display: flex; flex-direction: column; gap: 8px; }
+
+/* Question Bubble */
+.q-bubble { background: #f1f5f9; padding: 15px; border-radius: 12px 12px 12px 0; border: 1px solid #e2e8f0; width: 85%; }
+.q-header { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #64748b; font-weight: 600; margin-bottom: 5px; }
+.q-text { color: #1e293b; font-size: 0.95rem; line-height: 1.4; }
+
+/* Answer Bubble */
+.a-bubble { background: #f0fdf4; padding: 15px; border-radius: 12px 12px 0 12px; border: 1px solid #bbf7d0; width: 85%; align-self: flex-end; margin-top: -5px; }
+.a-header { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #166534; font-weight: 700; margin-bottom: 5px; }
+.a-text { color: #14532d; font-size: 0.95rem; line-height: 1.4; }
+
+/* Seller Reply Box */
+.seller-reply-action { margin-left: 20px; align-self: flex-start; width: 85%; }
+
+.trigger-reply-btn { background: none; border: none; color: #3b82f6; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.trigger-reply-btn:hover { text-decoration: underline; }
+
+.reply-input-box { display: flex; gap: 8px; margin-top: 5px; }
+.reply-input-box input { flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; outline: none; }
+.submit-reply-btn { background: #166534; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.cancel-reply-btn { background: #f1f5f9; color: #64748b; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; }

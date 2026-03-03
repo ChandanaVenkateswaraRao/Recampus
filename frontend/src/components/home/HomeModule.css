@@ -1,0 +1,49 @@
+.home-module { padding: 30px; max-width: 1200px; margin: 0 auto; }
+
+.house-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.house-card {
+  background: white; border-radius: 20px; overflow: hidden;
+  border: 1px solid #e2e8f0; transition: box-shadow 0.3s;
+}
+.house-card:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+
+.house-image { height: 220px; position: relative; background: #f1f5f9; }
+.house-image img { width: 100%; height: 100%; object-fit: cover; }
+.image-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: #cbd5e1; }
+
+.rent-tag {
+  position: absolute; bottom: 15px; right: 15px;
+  background: var(--primary); color: white;
+  padding: 6px 15px; border-radius: 30px; font-weight: 700;
+}
+
+.house-info { padding: 20px; }
+.house-info h3 { margin: 0 0 8px; font-size: 1.2rem; color: #1e293b; }
+.house-loc { display: flex; align-items: center; gap: 5px; color: #64748b; font-size: 0.9rem; margin-bottom: 12px; }
+
+.house-desc { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 20px; }
+
+/* Contact Unlocking Logic */
+.contact-status-box {
+  background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #f1f5f9;
+}
+
+.locked-contact { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.masked-phone { color: #94a3b8; font-family: monospace; font-size: 1.1rem; }
+
+.unlock-btn {
+  background: var(--accent); color: white; border: none; width: 100%;
+  padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.unlocked-contact { display: flex; flex-direction: column; gap: 5px; }
+.contact-row { display: flex; justify-content: space-between; font-size: 0.9rem; }
+.contact-row .label { color: #64748b; }
+.contact-row .val { font-weight: 700; color: var(--primary); }
+.phone-link { color: #00A36C !important; }

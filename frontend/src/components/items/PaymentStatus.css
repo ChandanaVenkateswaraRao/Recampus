@@ -1,0 +1,49 @@
+.payment-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.8); /* Darker background for focus */
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+}
+
+.payment-modal-content {
+  background: white;
+  width: 90%; max-width: 400px;
+  padding: 40px 30px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.status-step h3 { margin: 15px 0 5px; color: #1e293b; }
+.status-step p { color: #64748b; font-size: 0.9rem; margin-bottom: 20px; }
+.tiny-text { font-family: monospace; font-size: 0.75rem; background: #f1f5f9; padding: 4px; border-radius: 4px; display: inline-block; }
+
+/* Progress Bar */
+.progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+.fill { height: 100%; background: #003366; transition: width 0.5s ease; }
+
+/* OTP Box */
+.otp-reveal-box {
+  background: #f0fdf4;
+  border: 2px dashed #166534;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.otp-label { display: block; font-size: 0.75rem; font-weight: 700; color: #166534; letter-spacing: 1px; margin-bottom: 5px; }
+.otp-value { font-size: 2.5rem; font-weight: 900; color: #166534; letter-spacing: 5px; }
+
+.instruction { font-size: 0.8rem; color: #dc2626; margin-bottom: 20px; }
+
+.finish-btn {
+  background: #003366; color: white; width: 100%; padding: 14px;
+  border: none; border-radius: 10px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.icon-pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }

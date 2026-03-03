@@ -1,0 +1,50 @@
+:root {
+  --primary: #003366;
+  --accent: #C62828;
+  --bg: #F4F7FE;
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  background-color: var(--bg);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+/* The Professional Card Design */
+.item-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.item-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Role Badges */
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.role-badge.admin { background: #E3F2FD; color: #1976D2; }
+.role-badge.rider { background: #E8F5E9; color: #2E7D32; }
+
+/* Action Buttons */
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 51, 102, 0.2);
+}

@@ -1,0 +1,99 @@
+.gateway-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3000; /* Highest priority */
+}
+
+.gateway-box {
+  background: #f3f4f6;
+  width: 100%; max-width: 380px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', sans-serif;
+  animation: slideUp 0.3s ease-out;
+}
+
+.gateway-header {
+  background: #2b3040; /* Razorpay Dark Blue */
+  color: white;
+  padding: 20px;
+  position: relative;
+}
+
+.gateway-logo { font-weight: 700; font-size: 1.2rem; margin-bottom: 15px; }
+.pay-text { color: #3b82f6; }
+
+.order-summary p { margin: 0; font-size: 0.8rem; opacity: 0.8; }
+.order-summary h2 { margin: 5px 0 0; font-size: 1.8rem; }
+
+.close-gateway {
+  position: absolute; top: 15px; right: 15px;
+  background: rgba(255,255,255,0.1); border: none;
+  color: white; width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.gateway-body { padding: 20px; background: white; min-height: 300px; }
+
+.select-label {
+  font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase;
+  margin-bottom: 15px;
+}
+
+.pay-method {
+  display: flex; align-items: center; gap: 15px;
+  padding: 12px; border: 1px solid #e5e7eb;
+  border-radius: 8px; margin-bottom: 10px; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pay-method:hover { background: #f9fafb; border-color: #d1d5db; }
+.pay-method.selected { border-color: #3b82f6; background: #eff6ff; }
+
+.icon-circle {
+  width: 36px; height: 36px; background: white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #3b82f6; border: 1px solid #e5e7eb;
+}
+
+.method-details h4 { margin: 0; font-size: 0.95rem; color: #1f2937; }
+.method-details p { margin: 2px 0 0; font-size: 0.75rem; color: #6b7280; }
+
+.radio-circle {
+  margin-left: auto; width: 16px; height: 16px;
+  border: 2px solid #d1d5db; border-radius: 50%;
+}
+.pay-method.selected .radio-circle {
+  border-color: #3b82f6; border-width: 5px;
+}
+
+.gateway-input {
+  width: 100%; padding: 12px; border: 1px solid #d1d5db;
+  border-radius: 6px; margin-top: 10px; outline: none;
+}
+.gateway-input:focus { border-color: #3b82f6; }
+
+.card-inputs .row { display: flex; gap: 10px; }
+
+.pay-now-btn {
+  width: 100%; background: #3b82f6; color: white;
+  padding: 14px; border: none; border-radius: 8px;
+  font-weight: 700; font-size: 1rem; margin-top: 20px;
+  cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+.pay-now-btn:hover { background: #2563eb; }
+
+.gateway-footer {
+  background: #f3f4f6; text-align: center; padding: 10px;
+  font-size: 0.75rem; color: #6b7280; border-top: 1px solid #e5e7eb;
+}
+
+/* States */
+.processing-state, .success-state {
+  height: 250px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+.processing-state h3, .success-state h3 { margin-top: 15px; color: #1f2937; }

@@ -1,0 +1,324 @@
+.profile-container { padding: 40px; max-width: 900px; margin: 0 auto; }
+.profile-header { margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+.profile-header h1 { color: #003366; margin: 0; font-size: 1.8rem; }
+.profile-header p { color: #64748b; margin-top: 5px; }
+
+.history-sections { display: flex; flex-direction: column; gap: 50px; }
+.history-block h3 {
+  display: flex; align-items: center; gap: 10px;
+  color: #1e293b; font-size: 1.1rem; margin-bottom: 20px;
+  border-left: 4px solid #003366; padding-left: 10px;
+}
+
+.history-grid { display: grid; gap: 20px; }
+
+.activity-card-wrapper {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.activity-card {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.activity-info h4 { margin: 0; color: #1e293b; font-size: 1rem; }
+.activity-info span { font-weight: 800; color: #003366; font-size: 0.95rem; }
+
+/* Status Pills */
+.status-pill {
+  padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase;
+}
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.approved { background: #dcfce7; color: #166534; }
+.status-pill.sold { background: #e0e7ff; color: #3730a3; }
+.status-pill.paid { background: #f1f5f9; color: #475569; }
+
+/* Action Boxes (For Seller) */
+.action-box {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.85rem;
+  border-top: 1px solid #f1f5f9;
+}
+.action-box.warning { background: #fffbeb; color: #92400e; }
+.action-box.success { background: #f0fdf4; color: #166534; }
+
+.small-btn {
+  border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+.small-btn.primary { background: #003366; color: white; }
+
+.handover-btn {
+  margin-left: auto;
+  background: #166534; color: white; border: none;
+  padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+
+/* Verification Display (For Buyer) */
+.verification-display-box {
+  padding: 15px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+}
+.code-label { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.display-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #003366;
+  letter-spacing: 4px;
+  margin: 5px 0;
+}
+.verification-display-box p { font-size: 0.7rem; color: #94a3b8; margin: 0; }
+
+.empty-msg { color: #94a3b8; font-style: italic; font-size: 0.9rem; }
+
+/* Loader */
+.loader-container { text-align: center; padding: 100px; }
+.loader {
+  border: 4px solid #f3f3f3; border-top: 4px solid #003366;
+  border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* New Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.4rem;
+}
+
+.section-header p {
+  margin: 5px 0 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.empty-msg-box {
+  text-align: center;
+  padding: 40px;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #94a3b8;
+  border: 2px dashed #e2e8f0;
+}
+
+/* Animations */
+.fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* --- Stats Banner --- */
+.stats-banner {
+  display: flex;
+  gap: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+.stat-item:last-child { border-right: none; }
+
+.stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-top: 5px; }
+
+.text-green { color: #166534; }
+.text-orange { color: #d97706; }
+
+/* Background variants */
+.gold-bg { background: linear-gradient(to right, #fffbeb, #fff); border-left: 4px solid #d97706; }
+.blue-bg { background: linear-gradient(to right, #eff6ff, #fff); border-left: 4px solid #2563eb; }
+
+/* --- Activity Card Improvements --- */
+.meta-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.meta-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.meta-tag.success { color: #166534; background: #dcfce7; }
+
+.price-column {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+
+.price-tag { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+
+.earnings-pill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* --- Buttons --- */
+.invoice-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s;
+}
+
+.invoice-btn:hover { border-color: #003366; color: #003366; }
+
+.action-box.completed {
+  background: #f8fafc;
+  color: #94a3b8;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+
+/* Contact Reveal Box */
+.contact-reveal-box {
+  background: #eff6ff; /* Light Blue background */
+  border-top: 1px solid #dbeafe;
+  border-bottom: 1px solid #dbeafe;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.contact-row .label {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.contact-row .value {
+  font-weight: 600;
+}
+
+.contact-instruction {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.link { text-decoration: underline; cursor: pointer; }
+
+.wishlist-card-wrapper {
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.wishlist-card-wrapper:hover {
+  transform: translateY(-5px);
+}
+
+.remove-wishlist-text {
+  display: block;
+  width: 100%;
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  padding: 8px;
+  border-radius: 0 0 12px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: -5px; /* Pull it up to connect with card */
+}
+
+.remove-wishlist-text:hover {
+  background: #fecaca;
+}
+
+/* Seller Controls Bar */
+.seller-controls-bar {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.ctrl-btn {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.ctrl-btn:last-child { border-right: none; }
+
+.ctrl-btn:hover { background: #e2e8f0; color: #1e293b; }
+
+.ctrl-btn.edit:hover { color: #3b82f6; }
+.ctrl-btn.offline:hover { color: #166534; }
+.ctrl-btn.delete:hover { color: #dc2626; background: #fee2e2; }

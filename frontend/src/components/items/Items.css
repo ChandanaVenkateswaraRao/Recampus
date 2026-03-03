@@ -1,0 +1,95 @@
+.items-module { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.module-header { margin-bottom: 30px; }
+.module-header h2 { font-size: 1.8rem; color: var(--primary); margin: 0; }
+.module-header p { color: #64748b; margin-top: 5px; }
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.item-card {
+  background: white; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0; transition: transform 0.2s;
+}
+.item-card:hover { transform: translateY(-5px); }
+
+.item-image-wrapper { height: 200px; position: relative; }
+.item-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.item-category-badge {
+  position: absolute; top: 12px; left: 12px;
+  background: rgba(0,0,0,0.6); color: white;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;
+}
+
+.item-details { padding: 15px; }
+.item-header { display: flex; justify-content: space-between; align-items: start; }
+.item-header h3 { font-size: 1.1rem; margin: 0; color: #1e293b; }
+.item-condition { font-size: 0.75rem; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; }
+
+.item-desc { font-size: 0.85rem; color: #64748b; margin: 10px 0; line-height: 1.4; }
+
+.item-meta { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+.item-price { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.item-location { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #94a3b8; }
+
+.item-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 15px; border-top: 1px solid #f1f5f9;
+}
+.verified-status { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #00A36C; }
+
+.buy-btn {
+  background: var(--primary); color: white; border: none;
+  padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-content {
+  background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center;
+}
+.code-box {
+  background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;
+  border: 2px dashed var(--primary);
+}
+.verification-code { font-size: 2.5rem; font-weight: 900; color: var(--primary); letter-spacing: 5px; }
+.done-btn {
+  width: 100%; background: var(--primary); color: white; padding: 12px; border-radius: 10px; border: none; font-weight: 600;
+}
+
+.wishlist-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+  z-index: 5;
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.1);
+}
+
+.wishlist-btn svg {
+  color: #64748b; /* Default Grey */
+  transition: color 0.2s;
+}
+
+.wishlist-btn.liked svg {
+  color: #ef4444; /* Red when liked */
+}
