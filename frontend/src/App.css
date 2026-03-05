@@ -1,24 +1,25 @@
 :root {
-  --primary: #003366;
-  --accent: #C62828;
-  --bg: #F4F7FE;
+  --primary: #2563eb;
+  --accent: #0ea5e9;
+  --bg: #f4f8ff;
   --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 body {
   background-color: var(--bg);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-base, 'Manrope', 'Inter', sans-serif);
+  color: #0f172a;
   margin: 0;
 }
 
 /* The Professional Card Design */
 .item-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   box-shadow: var(--card-shadow);
   transition: transform 0.2s ease;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .item-card:hover {

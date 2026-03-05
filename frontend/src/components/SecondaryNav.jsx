@@ -4,7 +4,7 @@ import './Navbars.css';
 
 const SecondaryNav = () => {
   const { 
-    activeModule, rideRole, setRideRole, 
+    activeModule, rideRole, setRideRole,
     setCurrentView, currentView, 
     setProfileSection, profileSection, // Get these
     setIsCategoryView, setFilterCategory
@@ -91,9 +91,13 @@ const SecondaryNav = () => {
               <button className={`role-btn ${rideRole === 'captain' ? 'active' : ''}`} onClick={() => setRideRole('captain')}>Be a Captain</button>
             </div>
             <div className="ride-links">
-              {['On-Spot Routes', 'Pre-Booking', 'My Rides'].map(l => (
+              {['On-Spot Routes', 'Pre-Booking'].map(l => (
                 <button key={l} className={`sec-link-btn ${isActive(l) ? 'active' : ''}`} onClick={() => handleNavClick(l)}>{l}</button>
               ))}
+
+              <button className={`sec-link-btn ${isActive('My Rides') ? 'active' : ''}`} onClick={() => handleNavClick('My Rides')}>
+                My Rides
+              </button>
             </div>
           </div>
         );

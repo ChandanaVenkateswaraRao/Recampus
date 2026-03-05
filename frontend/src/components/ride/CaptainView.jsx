@@ -31,7 +31,15 @@ useEffect(() => {
   // Only broadcast if the ride is Accepted or Paid
   if (activeRide && (activeRide.status === 'accepted' || activeRide.status === 'paid')) {
     
-    const socket = io('http://localhost:5000');
+    const socket = io('http://localhost:5000', {
+      path: '/socket.io',
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 800,
+      timeout: 20000,
+      withCredentials: true
+    });
     
     // Get the Passenger ID from the ride object
     // Handle both cases: if passenger is an object or just an ID string

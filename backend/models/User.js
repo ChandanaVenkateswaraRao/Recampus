@@ -12,10 +12,22 @@ const userSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  phone: {
+    type: String,
+    default: ''
+  },
   roles: { 
     type: [String], 
     enum: ['student', 'admin', 'rider'], 
     default: ['student'] 
+  },
+  riderStatus: {
+    isOnline: { type: Boolean, default: false },
+    lastLocation: {
+      lat: { type: Number },
+      lng: { type: Number },
+      updatedAt: { type: Date }
+    }
   },
   // Wallet for simulated payouts (Item sales / Ride earnings)
   walletBalance: { 

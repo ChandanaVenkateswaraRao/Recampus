@@ -9,3 +9,11 @@ export const loginUser = async (credentials) => {
 export const registerUser = async (userData) => {
   return await axios.post(`${API_URL}/register`, userData);
 };
+
+export const updatePhone = async (phone, token) => {
+  return await axios.patch(
+    `${API_URL}/update-phone`,
+    { phone },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};

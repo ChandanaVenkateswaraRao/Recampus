@@ -5,12 +5,33 @@ const rideSchema = new mongoose.Schema({
   captain: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   
   type: { type: String, enum: ['on-spot', 'pre-booking'], required: true },
+  officialRouteId: { type: String },
   route: { type: String, required: true },
+  pickupLocation: {
+    lat: { type: Number },
+    lng: { type: Number },
+    address: { type: String }
+  },
+  dropLocation: {
+    lat: { type: Number },
+    lng: { type: Number },
+    address: { type: String }
+  },
+  distanceKm: { type: Number },
+  etaMin: { type: Number },
+  scheduledAt: { type: Date },
+  searchExpiresAt: { type: Date },
+  acceptedAt: { type: Date },
+  arrivedAt: { type: Date },
+  startedAt: { type: Date },
+  paymentDueAt: { type: Date },
+  autoAssigned: { type: Boolean, default: false },
+  matchedRadiusKm: { type: Number },
   price: { type: Number, required: true },
   
   status: { 
     type: String, 
-    enum: ['searching', 'accepted', 'paid', 'completed', 'cancelled'], 
+    enum: ['scheduled', 'searching', 'accepted', 'arrived', 'in_progress', 'paid', 'completed', 'cancelled'], 
     default: 'searching' 
   },
   

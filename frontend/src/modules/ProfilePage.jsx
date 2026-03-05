@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useModule } from '../context/ModuleContext.jsx';
 import axios from 'axios';
+import { updatePhone } from '../api/auth';
 import EditItemModal from '../components/items/EditItemModal.jsx';
 import { Eye, Trash2, Edit, Store } from 'lucide-react'; // Add these icons
 
 import { 
   Package, Bike, Home, CheckCircle, ShieldAlert, Key, 
-  ShoppingCart, Loader2, FileText, Calendar, TrendingUp,
+  ShoppingCart, Loader2, FileText, Calendar, CalendarDays, TrendingUp,
   User, Phone, Wallet
 } from 'lucide-react';
 import VerificationModal from '../components/shared/VerificationModal.jsx';
@@ -15,15 +16,35 @@ import './Profile.css';
 import ItemCard from '../components/items/ItemCard'; 
 import { Heart } from 'lucide-react';
 const ProfilePage = () => {
-  const { activeModule, profileSection } = useModule();
+  const { activeModule, profileSection, setActiveModule, setCurrentView, setRideRole } = useModule();
   const [history, setHistory] = useState(null);
   const [userData, setUserData] = useState(null); // Store user data for Wallet/Avatar
   const [loading, setLoading] = useState(true);
   const [verifyingItem, setVerifyingItem] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [phoneDraft, setPhoneDraft] = useState('');
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [ridesTab, setRidesTab] = useState('passenger');
+  const [ridesStatusFilter, setRidesStatusFilter] = useState('all');
+  const [ridesDateFilter, setRidesDateFilter] = useState('');
   useEffect(() => {
     fetchData();
   }, [activeModule]);
+
+  useEffect(() => {
+    if (activeModule === 'Ride') {
+      setRidesTab('passenger');
+      setRidesStatusFilter('all');
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
+    setRidesStatusFilter('all');
+  }, [ridesTab]);
+
+  useEffect(() => {
+    setRidesDateFilter('');
+  }, [ridesTab]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -42,6 +63,7 @@ const ProfilePage = () => {
 
       setHistory(resHistory.data);
       setUserData(resUser.data);
+      setPhoneDraft(resUser.data?.phone || '');
     } catch (err) {
       console.error("Error fetching data");
     } finally {
@@ -81,6 +103,29 @@ const ProfilePage = () => {
       fetchData(); // Refresh
     } catch (err) { alert(err.response?.data || "Update failed"); }
   };
+
+  const handleUpdatePhone = async () => {
+    const normalized = String(phoneDraft || '').trim();
+    if (!/^\+?[0-9]{10,15}$/.test(normalized)) {
+      alert('Please enter a valid phone number (10-15 digits).');
+      return;
+    }
+
+    try {
+      setSavingPhone(true);
+      const token = localStorage.getItem('token');
+      const res = await updatePhone(normalized, token);
+      if (res.data?.user) {
+        setUserData(res.data.user);
+        setPhoneDraft(res.data.user.phone || normalized);
+      }
+      alert(res.data?.message || 'Phone updated successfully.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update phone.');
+    } finally {
+      setSavingPhone(false);
+    }
+  };
   // --- UTILITY: Date Formatter ---
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -88,6 +133,33 @@ const ProfilePage = () => {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
+  };
+
+  const openRideRebook = (ride) => {
+    if (!ride?.pickupLocation?.address || !ride?.dropLocation?.address) {
+      alert('Pickup/drop details are unavailable for this ride.');
+      return;
+    }
+
+    try {
+      localStorage.setItem('recampus_ride_rebook_draft', JSON.stringify({
+        type: ride?.type || 'on-spot',
+        pickupLocation: {
+          address: ride?.pickupLocation?.address || '',
+          lat: Number(ride?.pickupLocation?.lat),
+          lng: Number(ride?.pickupLocation?.lng)
+        },
+        dropLocation: {
+          address: ride?.dropLocation?.address || '',
+          lat: Number(ride?.dropLocation?.lat),
+          lng: Number(ride?.dropLocation?.lng)
+        }
+      }));
+    } catch (_) {}
+
+    setRideRole('passenger');
+    setActiveModule('Ride');
+    setCurrentView('browse');
   };
 
   // --- UTILITY: Generate Professional Invoice ---
@@ -456,19 +528,132 @@ const ProfilePage = () => {
     );
   };
 
-  const RidesView = ({ rides }) => (
+  const RidesView = ({ passengerRides, captainRides }) => {
+    const rides = ridesTab === 'captain' ? captainRides : passengerRides;
+    const isPassengerTab = ridesTab === 'passenger';
+    const filteredRides = useMemo(() => rides.filter((ride) => {
+      const status = String(ride?.status || '').toLowerCase();
+      if (ridesStatusFilter === 'completed') return status === 'completed';
+      if (ridesStatusFilter === 'cancelled') return status === 'cancelled';
+      return true;
+    }), [rides, ridesStatusFilter]);
+
+    const dateFilteredRides = useMemo(() => {
+      if (!ridesDateFilter) return filteredRides;
+
+      return filteredRides.filter((ride) => {
+        const sourceDate = ride?.createdAt || ride?.updatedAt || ride?.scheduledAt;
+        if (!sourceDate) return false;
+
+        const parsed = new Date(sourceDate);
+        if (Number.isNaN(parsed.getTime())) return false;
+
+        const localDate = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 10);
+
+        return localDate === ridesDateFilter;
+      });
+    }, [filteredRides, ridesDateFilter]);
+
+    return (
     <section className="history-block fade-in">
        <div className="section-header">
         <Bike size={24} color="#003366"/>
         <h3>My Ride History</h3>
       </div>
+
+      <div className="rides-tab-switch">
+        <button
+          className={ridesTab === 'passenger' ? 'active' : ''}
+          onClick={() => setRidesTab('passenger')}
+          type="button"
+        >
+          Passenger Rides ({passengerRides.length})
+        </button>
+        <button
+          className={ridesTab === 'captain' ? 'active' : ''}
+          onClick={() => setRidesTab('captain')}
+          type="button"
+        >
+          Captain Rides ({captainRides.length})
+        </button>
+      </div>
+
+      <div className="rides-filter-row">
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'completed', label: 'Completed' },
+          { key: 'cancelled', label: 'Cancelled' }
+        ].map((filter) => (
+          <button
+            key={filter.key}
+            type="button"
+            className={ridesStatusFilter === filter.key ? 'active' : ''}
+            onClick={() => setRidesStatusFilter(filter.key)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="rides-date-filter-row">
+        <div className="rides-date-filter">
+          <CalendarDays size={15} />
+          <input
+            type="date"
+            value={ridesDateFilter}
+            onChange={(e) => setRidesDateFilter(e.target.value)}
+            aria-label="Filter My Rides by date"
+          />
+        </div>
+        {ridesDateFilter && (
+          <button
+            type="button"
+            className="rides-date-clear"
+            onClick={() => setRidesDateFilter('')}
+          >
+            Clear Date
+          </button>
+        )}
+      </div>
+
       <div className="history-grid">
-        {rides?.length > 0 ? rides.map(ride => (
-          <ActivityCard key={ride._id} title={ride.route} price={ride.price} status={ride.status} />
-        )) : <EmptyState msg="No rides taken yet." />}
+        {dateFilteredRides?.length > 0 ? dateFilteredRides.map((ride) => (
+          <div key={ride._id} className="activity-card-wrapper">
+            <div className="activity-card">
+              <div className="activity-info">
+                <h4>{ride.route || 'Ride'}</h4>
+                <div className="meta-row">
+                  <span className="meta-tag"><Calendar size={12} /> {formatDate(ride.createdAt)}</span>
+                  <span className="meta-tag">Type: {ride.type || '-'}</span>
+                  <span className={`meta-tag ${isPassengerTab ? 'success' : ''}`}>{isPassengerTab ? 'Passenger' : 'Captain'}</span>
+                </div>
+              </div>
+              <div className="price-column">
+                <span className="price-tag">₹{ride.price || '-'}</span>
+                <div className={`status-pill ${ride.status?.toLowerCase()}`}>{ride.status}</div>
+              </div>
+            </div>
+
+            <div className="ride-history-actions">
+              {isPassengerTab ? (
+                <button className="small-btn primary" onClick={() => openRideRebook(ride)}>Rebook</button>
+              ) : (
+                <span className="ride-history-note">Rebook is available for passenger rides</span>
+              )}
+              <span>
+                {ride?.pickupLocation?.address || 'Pickup unavailable'}
+                {' ➔ '}
+                {ride?.dropLocation?.address || 'Drop unavailable'}
+              </span>
+            </div>
+          </div>
+        )) : <EmptyState msg={ridesDateFilter ? 'No rides found for selected date.' : (isPassengerTab ? 'No passenger rides for this filter.' : 'No captain rides for this filter.')} />}
       </div>
     </section>
-  );
+    );
+  };
 
   const BookingsView = ({ bookings }) => (
     <section className="history-block fade-in">
@@ -517,6 +702,17 @@ const ProfilePage = () => {
           <div>
             <h3>{userData?.email}</h3>
             <span className="role-badge">{userData?.roles?.join(' & ')}</span>
+            <div className="profile-phone-editor">
+              <input
+                type="tel"
+                value={phoneDraft}
+                placeholder="Add phone for ride contact"
+                onChange={(e) => setPhoneDraft(e.target.value)}
+              />
+              <button className="small-btn primary" onClick={handleUpdatePhone} disabled={savingPhone}>
+                {savingPhone ? 'Saving...' : 'Save Phone'}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -538,7 +734,10 @@ const ProfilePage = () => {
         )}
 
         {activeModule === 'Ride' && history && (
-          <RidesView rides={history.asPassenger} />
+          <RidesView
+            passengerRides={history.asPassenger || []}
+            captainRides={history.asCaptain || []}
+          />
         )}
 
         {activeModule === 'Home Renting' && history && (

@@ -12,6 +12,7 @@ const Ride = require('../models/Ride'); // Added missing import
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/profile', auth, authController.getProfile);
+router.patch('/update-phone', auth, authController.updatePhone);
 
 // --- CRYPTO WALLET ROUTES ---
 

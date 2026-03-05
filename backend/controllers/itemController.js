@@ -50,7 +50,7 @@ exports.purchaseItem = async (req, res) => {
       buyer: req.user.id,
       verificationCode: code,
       isPaid: true
-    }, { new: true });
+    }, { returnDocument: 'after' });
 
     res.json({ 
       message: "Payment simulated successfully. Show this code to the seller during physical collection.",

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser } from '../api/auth';
-import { ShieldCheck, Mail, Lock, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, ArrowRight, Phone } from 'lucide-react';
 import './Auth.css';
 
 const Auth = ({ setToken, setUser }) => {
@@ -15,6 +15,11 @@ const Auth = ({ setToken, setUser }) => {
     // Client-side Domain Check
     if (!formData.email.endsWith('@klu.ac.in')) {
       setError('Please use your official @klu.ac.in email.');
+      return;
+    }
+
+    if (!isLogin && !/^\+?[0-9]{10,15}$/.test((formData.phone || '').trim())) {
+      setError('Please enter a valid phone number (10-15 digits).');
       return;
     }
 
@@ -59,6 +64,18 @@ const Auth = ({ setToken, setUser }) => {
               onChange={(e) => setFormData({...formData, password: e.target.value})}
             />
           </div>
+
+          {!isLogin && (
+            <div className="input-group">
+              <Phone size={18} />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                required
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+          )}
 
           <button type="submit" className="auth-btn">
             {isLogin ? 'Login' : 'Register'} <ArrowRight size={18} />

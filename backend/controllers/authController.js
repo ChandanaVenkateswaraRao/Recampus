@@ -4,11 +4,16 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, phone } = req.body;
 
     // 1. Strict Domain Validation
     if (!email.endsWith('@klu.ac.in')) {
       return res.status(403).json({ message: "Only @klu.ac.in emails are allowed." });
+    }
+
+    const normalizedPhone = String(phone || '').trim();
+    if (!/^\+?[0-9]{10,15}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: 'Please provide a valid phone number (10-15 digits).' });
     }
 
     // 2. Check if user already exists
@@ -23,6 +28,7 @@ exports.register = async (req, res) => {
     user = new User({
       email,
       password: hashedPassword,
+      phone: normalizedPhone,
       roles: ['student'] 
     });
 
@@ -35,7 +41,7 @@ exports.register = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.status(201).json({ token, user: { email: user.email, roles: user.roles } });
+    res.status(201).json({ token, user: { id: user._id, email: user.email, phone: user.phone, roles: user.roles } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -62,6 +68,7 @@ exports.login = async (req, res) => {
       user: { 
         id: user._id,
         email: user.email, 
+        phone: user.phone || '',
         roles: user.roles,
         balance: user.walletBalance 
       } 
@@ -92,5 +99,28 @@ exports.getProfile = async (req, res) => {
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.updatePhone = async (req, res) => {
+  try {
+    const normalizedPhone = String(req.body?.phone || '').trim();
+    if (!/^\+?[0-9]{10,15}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: 'Please provide a valid phone number (10-15 digits).' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { phone: normalizedPhone } },
+      { returnDocument: 'after' }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    return res.json({ message: 'Phone updated successfully.', user });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error' });
   }
 };

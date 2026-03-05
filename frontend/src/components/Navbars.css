@@ -376,3 +376,342 @@
   color: #1e293b;
   font-weight: 500;
 }
+
+/* Professional Cleanup Layer */
+.primary-nav {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.module-switcher {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.module-switcher button {
+  font-family: var(--font-base);
+  font-weight: 700;
+}
+
+.secondary-nav {
+  background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.sec-link-btn {
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1;
+}
+
+.sec-link-btn.active {
+  background: rgba(255, 255, 255, 0.28);
+  border-bottom-color: transparent;
+}
+
+.role-toggle-group {
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.role-btn {
+  font-family: var(--font-base);
+  font-weight: 700;
+}
+
+.profile-direct-btn {
+  border-radius: 999px;
+}
+
+.nav-logout-btn,
+.nav-icon-btn {
+  border: 1px solid transparent;
+}
+
+.nav-logout-btn:hover,
+.nav-icon-btn:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Final Color System Override */
+.primary-nav {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+}
+
+.logo {
+  color: #ffffff;
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.module-switcher {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.module-switcher button.active {
+  color: var(--primary);
+}
+
+.secondary-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sec-link-btn {
+  color: #334155;
+}
+
+.sec-link-btn:hover {
+  color: var(--primary);
+}
+
+.sec-link-btn.active {
+  color: var(--primary);
+  background: #eaf0ff;
+}
+
+.role-toggle-group {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+
+.role-btn {
+  color: #475569;
+}
+
+.role-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* Elegant Palette v2 */
+.primary-nav {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.65);
+}
+
+.module-switcher {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.module-switcher button {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.module-switcher button.active {
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.secondary-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sec-link-btn {
+  color: #475569;
+}
+
+.sec-link-btn:hover,
+.sec-link-btn.active {
+  color: #1e293b;
+  background: #e2e8f0;
+}
+
+.role-toggle-group {
+  background: #eef2f7;
+  border-color: #dbe3ed;
+}
+
+.role-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.secondary-nav .sec-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.secondary-nav .sec-link-icon {
+  opacity: 0.9;
+}
+
+.secondary-nav .ride-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Ride-Style Role Toggle (Secondary Nav) */
+.secondary-nav .ride-nav-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.secondary-nav .role-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid #dbe3ed;
+  margin-right: 0;
+}
+
+.secondary-nav .role-btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  background: transparent;
+  transition: all 0.18s ease;
+}
+
+.secondary-nav .role-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.secondary-nav .role-btn.active {
+  background: #0d6e67;
+  border-color: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 8px 18px -12px rgba(13, 110, 103, 0.7);
+}
+
+.wallet-preview {
+  color: #86efac;
+}
+
+/* Premium UI Finish */
+.primary-nav {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo {
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
+.module-switcher {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.module-switcher button {
+  position: relative;
+}
+
+.module-switcher button.active {
+  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.8);
+}
+
+.secondary-nav {
+  position: sticky;
+  top: 70px;
+  z-index: 80;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.sec-link-btn {
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+}
+
+.sec-link-btn:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.sec-link-btn.active {
+  border-color: #bfdbfe;
+  box-shadow: 0 6px 16px -12px rgba(37, 99, 235, 0.8);
+}
+
+.profile-direct-btn {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.notif-dropdown {
+  border-radius: 14px;
+}
+
+/* Dark Theme Final */
+.primary-nav {
+  background: linear-gradient(120deg, #0f172a, #10202a 60%, #1f2937);
+  border-bottom-color: rgba(148, 163, 184, 0.2);
+}
+
+.module-switcher {
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.module-switcher button {
+  color: #cbd5e1;
+}
+
+.module-switcher button:hover {
+  background: rgba(20, 184, 166, 0.22);
+  color: #f8fafc;
+}
+
+.module-switcher button.active {
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+  color: #ffffff;
+}
+
+.secondary-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #dbe7f5;
+}
+
+.sec-link-btn {
+  color: #475569;
+}
+
+.sec-link-btn:hover {
+  background: #eef4ff;
+  border-color: #d4e2f5;
+  color: #0f172a;
+}
+
+.sec-link-btn.active {
+  background: #eaf1ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  box-shadow: 0 8px 18px -12px rgba(37, 99, 235, 0.4);
+}
+
+.role-toggle-group {
+  background: #f1f5f9;
+  border-color: #dbe3ed;
+}
+
+.role-btn {
+  color: #475569;
+}
+
+.role-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+}

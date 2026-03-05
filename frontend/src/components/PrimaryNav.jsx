@@ -13,13 +13,21 @@ const PrimaryNav = ({ user, onLogout }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?._id && !user?.id) return;
 
     // 1. Fetch old notifications from DB (You will need a quick route for this: GET /api/auth/notifications)
     // For now, we will just handle live ones for the demo.
 
     // 2. Connect to Socket Server
-    const socket = io('http://localhost:5000');
+    const socket = io('http://localhost:5000', {
+      path: '/socket.io',
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 800,
+      timeout: 20000,
+      withCredentials: true
+    });
     
     // 3. Tell the server exactly who we are
     socket.emit('register', user.id || user._id);
@@ -34,7 +42,7 @@ const PrimaryNav = ({ user, onLogout }) => {
 
     // Cleanup on unmount
     return () => socket.disconnect();
-  }, [user]);
+  }, [user?._id, user?.id]);
 
 
   const markAsRead = () => {
