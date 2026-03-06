@@ -1,8 +1,10 @@
 import React from 'react';
-import { MapPin, IndianRupee, Phone, Lock, Home } from 'lucide-react';
+import { MapPin, IndianRupee, Phone, Lock, Home, Heart } from 'lucide-react';
 import './HomeModule.css';
 
-const HouseCard = ({ house, onUnlock }) => {
+const HouseCard = ({ house, onUnlock, onToggleLike, isBusy }) => {
+  const unlockFee = Number(house?.unlockFee) > 0 ? Number(house.unlockFee) : 50;
+
   return (
     <div className="house-card">
       <div className="house-image">
@@ -11,6 +13,16 @@ const HouseCard = ({ house, onUnlock }) => {
         ) : (
           <div className="image-placeholder"><Home size={40} /></div>
         )}
+        <button
+          type="button"
+          className={`house-like-btn ${house?.isLiked ? 'active' : ''}`}
+          onClick={() => onToggleLike(house)}
+          disabled={isBusy}
+          title={house?.isLiked ? 'Unlike' : 'Like this house'}
+        >
+          <Heart size={16} fill={house?.isLiked ? 'currentColor' : 'none'} />
+          <span>{house?.likesCount || 0}</span>
+        </button>
         <div className="rent-tag">₹{house.rent} / month</div>
       </div>
 
@@ -41,8 +53,8 @@ const HouseCard = ({ house, onUnlock }) => {
                 <Phone size={14} />
                 <span>+91 ••••• ••902</span>
               </div>
-              <button className="unlock-btn" onClick={() => onUnlock(house)}>
-                <Lock size={14} /> Unlock Contact
+              <button className="unlock-btn" onClick={() => onUnlock(house)} disabled={isBusy}>
+                <Lock size={14} /> {isBusy ? 'Processing...' : `Pay Rs.${unlockFee} to Unlock Contact`}
               </button>
             </div>
           )}

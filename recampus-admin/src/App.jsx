@@ -5,6 +5,7 @@ import AdminSidebar from './components/AdminSidebar';
 import AdminDashboard from './pages/AdminDashboard';
 import ItemModeration from './pages/ItemModeration';
 import HouseManagement from './pages/HouseManagement';
+import RideMonitor from './pages/RideMonitor';
 import './Admin.css';
 
 // --- REAL ADMIN LOGIN COMPONENT ---
@@ -89,8 +90,7 @@ function App() {
             <Route path="/" element={<AdminDashboard />} />
             <Route path="/moderate-items" element={<ItemModeration />} />
             <Route path="/manage-houses" element={<HouseManagement />} />
-            {/* Placeholder for Ride Monitor */}
-            <Route path="/monitor-rides" element={<div className="admin-card"><h2>Ride Monitor</h2></div>} />
+            <Route path="/monitor-rides" element={<RideMonitor />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

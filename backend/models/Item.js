@@ -21,6 +21,12 @@ const itemSchema = new mongoose.Schema({
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['pending', 'approved', 'hold', 'sold', 'pending_handover'], default: 'pending' },
   suggestedPrice: Number,
+  moderation: {
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reviewedByEmail: { type: String },
+    reviewedAt: { type: Date },
+    note: { type: String, maxlength: 240 }
+  },
   buyer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   verificationCode: String,
   isPaid: { type: Boolean, default: false },

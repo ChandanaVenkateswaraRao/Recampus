@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios';
 import { GoogleMap, InfoWindowF, MarkerF, PolylineF, useJsApiLoader } from '@react-google-maps/api';
 import {
+  AlertTriangle,
+  Bell,
   Bike,
   CheckCircle,
   Clock,
@@ -10,7 +12,9 @@ import {
   Navigation,
   Phone,
   ShieldCheck,
+  Share2,
   User,
+  X,
   XCircle
 } from 'lucide-react';
 import PaymentGateway from '../components/items/PaymentGateway';
@@ -24,6 +28,7 @@ const MAP_LIBRARIES = ['marker'];
 const API_RIDE = 'http://localhost:5000/api/rides';
 const API_AUTH = 'http://localhost:5000/api/auth';
 const RIDE_REBOOK_DRAFT_KEY = 'recampus_ride_rebook_draft';
+const RIDE_SOS_PHONE = import.meta.env.VITE_RIDE_SOS_PHONE || '112';
 
 const displayContact = (person) => {
   if (!person) return 'Contact unavailable';
@@ -482,8 +487,13 @@ const RideModule = ({ user }) => {
   const [showGateway, setShowGateway] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState([]);
+  const [rideAlerts, setRideAlerts] = useState([]);
+  const [lastCaptainSignalAt, setLastCaptainSignalAt] = useState(null);
+  const [isLiveStale, setIsLiveStale] = useState(false);
   const [visualCaptainPoint, setVisualCaptainPoint] = useState(null);
   const latestCaptainPointRef = useRef(null);
+  const previousRideStatusRef = useRef('');
+  const rideAlertTimersRef = useRef({});
 
   const token = localStorage.getItem('token');
   const headers = { headers: { Authorization: `Bearer ${token}` } };
@@ -517,6 +527,26 @@ const RideModule = ({ user }) => {
     if (!rideRole || rideRole === role) return;
     setRole(rideRole);
   }, [rideRole, role]);
+
+  const dismissRideAlert = useCallback((alertId) => {
+    setRideAlerts((prev) => prev.filter((item) => item.id !== alertId));
+    if (rideAlertTimersRef.current[alertId]) {
+      window.clearTimeout(rideAlertTimersRef.current[alertId]);
+      delete rideAlertTimersRef.current[alertId];
+    }
+  }, []);
+
+  const pushRideAlert = useCallback((text, type = 'info') => {
+    if (!text) return;
+
+    const alertId = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setRideAlerts((prev) => [{ id: alertId, text, type }, ...prev].slice(0, 4));
+
+    rideAlertTimersRef.current[alertId] = window.setTimeout(() => {
+      setRideAlerts((prev) => prev.filter((item) => item.id !== alertId));
+      delete rideAlertTimersRef.current[alertId];
+    }, 5000);
+  }, []);
 
   const applyActiveRide = (nextRide) => {
     const normalized = nextRide || null;
@@ -799,6 +829,56 @@ const RideModule = ({ user }) => {
   }, [role, user?._id]);
 
   useEffect(() => {
+    const nextStatus = String(activeRide?.status || '');
+
+    if (!nextStatus) {
+      previousRideStatusRef.current = '';
+      return;
+    }
+
+    if (!previousRideStatusRef.current) {
+      previousRideStatusRef.current = nextStatus;
+      return;
+    }
+
+    if (previousRideStatusRef.current === nextStatus) return;
+
+    const passengerMessages = {
+      accepted: 'Captain accepted your ride.',
+      arrived: 'Captain arrived at pickup.',
+      in_progress: 'Your trip has started.',
+      paid: 'Payment confirmed. Share OTP with captain to complete trip.',
+      completed: 'Trip completed successfully.',
+      cancelled: 'Ride was cancelled.'
+    };
+
+    const captainMessages = {
+      accepted: 'Ride accepted. Navigate to pickup location.',
+      arrived: 'You marked arrival. Waiting for passenger to board.',
+      in_progress: 'Trip started. Drive safely.',
+      paid: 'Passenger payment done. Verify OTP to complete ride.',
+      completed: 'Trip completed and payout released.',
+      cancelled: 'Ride was cancelled.'
+    };
+
+    const statusMessage = role === 'captain' ? captainMessages[nextStatus] : passengerMessages[nextStatus];
+
+    if (statusMessage) {
+      const type = ['cancelled'].includes(nextStatus) ? 'warning' : 'info';
+      pushRideAlert(statusMessage, type);
+    }
+
+    previousRideStatusRef.current = nextStatus;
+  }, [activeRide?.status, role, pushRideAlert]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(rideAlertTimersRef.current).forEach((timerId) => window.clearTimeout(timerId));
+      rideAlertTimersRef.current = {};
+    };
+  }, []);
+
+  useEffect(() => {
     if (!(role === 'passenger' && !hasPassengerRide)) return;
 
     try {
@@ -944,6 +1024,75 @@ const RideModule = ({ user }) => {
       ? 'Captain location updating...'
       : 'Waiting for live captain location';
 
+  const shouldTrackLiveReliability =
+    hasPassengerRide && ['accepted', 'arrived', 'in_progress', 'paid'].includes(String(activeRide?.status || ''));
+
+  useEffect(() => {
+    if (!shouldTrackLiveReliability) {
+      setIsLiveStale(false);
+      setLastCaptainSignalAt(null);
+      return;
+    }
+
+    if (captainLive?.captainLocation || captainLive?.updatedAt) {
+      setLastCaptainSignalAt(Date.now());
+    }
+  }, [captainLive?.captainLocation?.lat, captainLive?.captainLocation?.lng, captainLive?.updatedAt, shouldTrackLiveReliability]);
+
+  useEffect(() => {
+    if (!shouldTrackLiveReliability || !lastCaptainSignalAt) {
+      setIsLiveStale(false);
+      return;
+    }
+
+    const evaluateStale = () => {
+      setIsLiveStale(Date.now() - lastCaptainSignalAt > 15000);
+    };
+
+    evaluateStale();
+    const timer = setInterval(evaluateStale, 4000);
+    return () => clearInterval(timer);
+  }, [lastCaptainSignalAt, shouldTrackLiveReliability]);
+
+  const etaReliability = useMemo(() => {
+    if (!shouldTrackLiveReliability) return null;
+
+    const eta = Number(captainLive?.etaMin);
+    if (isLiveStale) {
+      return { label: 'Delayed', tone: 'delayed' };
+    }
+    if (!Number.isFinite(eta)) {
+      return { label: 'Updating', tone: 'updating' };
+    }
+    if (eta <= 6) {
+      return { label: 'On Time', tone: 'on_time' };
+    }
+    if (eta <= 12) {
+      return { label: 'Slight Delay', tone: 'slight_delay' };
+    }
+    return { label: 'Delayed', tone: 'delayed' };
+  }, [captainLive?.etaMin, isLiveStale, shouldTrackLiveReliability]);
+
+  const fareBreakup = useMemo(() => {
+    if (!dynamicQuote) return null;
+
+    const distanceKm = Number(dynamicQuote.distanceKm) || 0;
+    const totalFare = Number(dynamicQuote.fare) || 0;
+    if (totalFare <= 0) return null;
+
+    const baseFare = Math.max(12, Math.round(totalFare * 0.22));
+    const distanceFare = Math.max(0, totalFare - baseFare);
+    const platformFee = 0;
+
+    return {
+      baseFare,
+      distanceFare,
+      platformFee,
+      distanceKm,
+      totalFare
+    };
+  }, [dynamicQuote]);
+
   const requestRide = async (payload) => {
     setSubmitting(true);
     try {
@@ -1025,14 +1174,60 @@ const RideModule = ({ user }) => {
   };
 
   const cancelRide = async () => {
-    if (!window.confirm('Cancel this ride?')) return;
+    const cancellationReason = window.prompt('Please tell us why you are cancelling this ride:');
+    if (cancellationReason === null) return;
+
+    const reason = String(cancellationReason || '').trim();
+    if (reason.length < 3) {
+      alert('Please provide at least 3 characters as reason.');
+      return;
+    }
+
+    if (!window.confirm('Confirm cancellation?')) return;
     try {
-      await axios.patch(`${API_RIDE}/cancel/${activeRide._id}`, {}, headers);
+      await axios.patch(`${API_RIDE}/cancel/${activeRide._id}`, { reason }, headers);
       applyActiveRide(null);
       applyCaptainLive(null);
       fetchActiveRide(role);
     } catch (err) {
       alert(err.response?.data?.message || 'Could not cancel ride');
+    }
+  };
+
+  const handleSos = () => {
+    const confirmed = window.confirm(`Call emergency support (${RIDE_SOS_PHONE}) now?`);
+    if (!confirmed) return;
+    window.location.href = `tel:${RIDE_SOS_PHONE}`;
+  };
+
+  const handleShareTrip = async () => {
+    if (!activeRide) return;
+
+    const status = String(activeRide?.status || '').replace('_', ' ');
+    const route = activeRide?.route || 'Campus Ride';
+    const shareUrl = `${window.location.origin}${window.location.pathname}?module=ride&rideId=${encodeURIComponent(activeRide._id || '')}`;
+    const shareText = `Recampus ride update\nRoute: ${route}\nStatus: ${status}\nTrack: ${shareUrl}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Recampus Ride Status',
+          text: shareText,
+          url: shareUrl
+        });
+        pushRideAlert('Trip status shared successfully.', 'info');
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        pushRideAlert('Trip status copied to clipboard.', 'info');
+        return;
+      }
+
+      window.prompt('Copy trip details:', shareText);
+    } catch (_) {
+      pushRideAlert('Unable to share trip right now.', 'warning');
     }
   };
 
@@ -1130,6 +1325,27 @@ const RideModule = ({ user }) => {
   };
 
   const renderPassenger = () => {
+    const renderPassengerSafetyActions = () => (
+      <div className="ride-safety-actions">
+        <button type="button" className="rapido-btn share compact" onClick={handleShareTrip}>
+          <Share2 size={14} /> Share Trip
+        </button>
+        <button type="button" className="rapido-btn sos compact" onClick={handleSos}>
+          <AlertTriangle size={14} /> SOS
+        </button>
+      </div>
+    );
+
+    const renderLiveReliabilityWarning = () => {
+      if (!isLiveStale || !shouldTrackLiveReliability) return null;
+      return (
+        <div className="ride-live-warning" role="status" aria-live="polite">
+          <AlertTriangle size={14} />
+          <span>Live captain location is delayed. We are trying to reconnect updates.</span>
+        </div>
+      );
+    };
+
     if (!hasPassengerRide) {
       return (
         <div className="ride-panel-body fade-in">
@@ -1276,20 +1492,43 @@ const RideModule = ({ user }) => {
             )}
 
             {dynamicQuote && (
-              <div className="booking-quote-grid">
-                <div className="booking-quote-item">
-                  <span>Distance</span>
-                  <strong>{dynamicQuote.distanceKm} km</strong>
+              <>
+                <div className="booking-quote-grid">
+                  <div className="booking-quote-item">
+                    <span>Distance</span>
+                    <strong>{dynamicQuote.distanceKm} km</strong>
+                  </div>
+                  <div className="booking-quote-item">
+                    <span>ETA</span>
+                    <strong>{dynamicQuote.etaMin} min</strong>
+                  </div>
+                  <div className="booking-quote-item">
+                    <span>Fare</span>
+                    <strong>₹{dynamicQuote.fare}</strong>
+                  </div>
                 </div>
-                <div className="booking-quote-item">
-                  <span>ETA</span>
-                  <strong>{dynamicQuote.etaMin} min</strong>
-                </div>
-                <div className="booking-quote-item">
-                  <span>Fare</span>
-                  <strong>₹{dynamicQuote.fare}</strong>
-                </div>
-              </div>
+                {fareBreakup && (
+                  <div className="fare-breakup-card" aria-label="Fare breakup">
+                    <div className="fare-breakup-title">Fare Breakup</div>
+                    <div className="fare-breakup-row">
+                      <span>Base Fare</span>
+                      <strong>₹{fareBreakup.baseFare}</strong>
+                    </div>
+                    <div className="fare-breakup-row">
+                      <span>Distance ({fareBreakup.distanceKm} km)</span>
+                      <strong>₹{fareBreakup.distanceFare}</strong>
+                    </div>
+                    <div className="fare-breakup-row muted">
+                      <span>Platform Fee</span>
+                      <strong>₹{fareBreakup.platformFee}</strong>
+                    </div>
+                    <div className="fare-breakup-total">
+                      <span>Total</span>
+                      <strong>₹{fareBreakup.totalFare}</strong>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <button
@@ -1332,6 +1571,7 @@ const RideModule = ({ user }) => {
             <p className="state-route-text">{activeRide.route}</p>
             <p className="state-meta-text">{new Date(activeRide.scheduledAt).toLocaleString()}</p>
           </div>
+          {renderPassengerSafetyActions()}
           <button className="rapido-btn danger full" onClick={cancelRide}><XCircle size={16} />Cancel</button>
         </div>
       );
@@ -1346,6 +1586,7 @@ const RideModule = ({ user }) => {
             <h3>Finding Captain</h3>
             <p className="state-route-text">{activeRide.route}</p>
           </div>
+          {renderPassengerSafetyActions()}
           <button className="rapido-btn danger full" onClick={cancelRide}><XCircle size={16} />Cancel</button>
         </div>
       );
@@ -1356,6 +1597,7 @@ const RideModule = ({ user }) => {
       return (
         <div className="ride-panel-body fade-in">
           {renderRideProgress(activeRide.status)}
+          {renderLiveReliabilityWarning()}
           <div className="ride-state-shell center">
             <CheckCircle size={42} />
             <h3>Captain Assigned</h3>
@@ -1373,6 +1615,7 @@ const RideModule = ({ user }) => {
               <Phone size={16} /> Call Captain
             </a>
           )}
+          {renderPassengerSafetyActions()}
           <button className="rapido-btn danger full" onClick={cancelRide}><XCircle size={16} />Cancel</button>
         </div>
       );
@@ -1383,6 +1626,7 @@ const RideModule = ({ user }) => {
       return (
         <div className="ride-panel-body fade-in">
           {renderRideProgress(activeRide.status)}
+          {renderLiveReliabilityWarning()}
           <div className="ride-state-shell center">
             <MapPin size={42} />
             <h3>Captain Arrived</h3>
@@ -1400,6 +1644,7 @@ const RideModule = ({ user }) => {
               <Phone size={16} /> Call Captain
             </a>
           )}
+          {renderPassengerSafetyActions()}
         </div>
       );
     }
@@ -1408,11 +1653,13 @@ const RideModule = ({ user }) => {
       return (
         <div className="ride-panel-body fade-in">
           {renderRideProgress(activeRide.status)}
+          {renderLiveReliabilityWarning()}
           <div className="ride-state-shell center">
             <ShieldCheck size={40} />
             <h3>Trip In Progress</h3>
             <p>{captainLive?.etaMin ? `Destination ETA: ${captainLive.etaMin} min` : 'Ride in motion'}</p>
           </div>
+          {renderPassengerSafetyActions()}
           <button className="rapido-btn dark" onClick={() => setShowGateway(true)}>Pay ₹{activeRide.price}</button>
         </div>
       );
@@ -1422,6 +1669,7 @@ const RideModule = ({ user }) => {
       return (
         <div className="ride-panel-body fade-in">
           {renderRideProgress(activeRide.status)}
+          {renderLiveReliabilityWarning()}
           <div className="ride-state-shell center">
             <ShieldCheck size={40} />
             <h3>Payment Success</h3>
@@ -1430,6 +1678,7 @@ const RideModule = ({ user }) => {
             <span>OTP FOR CAPTAIN</span>
             <h1>{activeRide.completionCode}</h1>
           </div>
+          {renderPassengerSafetyActions()}
         </div>
       );
     }
@@ -1577,6 +1826,25 @@ const RideModule = ({ user }) => {
 
   return (
     <div className="rapido-ride-module">
+      {rideAlerts.length > 0 && (
+        <div className="ride-alert-stack" role="status" aria-live="polite">
+          {rideAlerts.map((alertItem) => (
+            <div key={alertItem.id} className={`ride-alert-item ${alertItem.type}`}>
+              <Bell size={14} />
+              <span>{alertItem.text}</span>
+              <button
+                type="button"
+                className="ride-alert-close"
+                onClick={() => dismissRideAlert(alertItem.id)}
+                aria-label="Dismiss notification"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="rapido-map-layer">
         <RideMapView
           isMapLoaded={isMapLoaded}
@@ -1598,6 +1866,13 @@ const RideModule = ({ user }) => {
           <div className="ride-live-chip">
             <Navigation size={14} />
             <span>{trackingText}</span>
+          </div>
+        )}
+
+        {etaReliability && (
+          <div className={`ride-live-chip ride-eta-chip ${etaReliability.tone}`}>
+            <Clock size={14} />
+            <span>ETA Confidence: {etaReliability.label}</span>
           </div>
         )}
 

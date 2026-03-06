@@ -16,6 +16,35 @@
 .house-image img { width: 100%; height: 100%; object-fit: cover; }
 .image-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: #cbd5e1; }
 
+.house-like-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 999px;
+  padding: 5px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.house-like-btn:hover {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.house-like-btn.active {
+  background: #ffe4e6;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
 .rent-tag {
   position: absolute; bottom: 15px; right: 15px;
   background: var(--primary); color: white;
@@ -40,6 +69,12 @@
   background: var(--accent); color: white; border: none; width: 100%;
   padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.unlock-btn:disabled,
+.house-like-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .unlocked-contact { display: flex; flex-direction: column; gap: 5px; }

@@ -45,6 +45,85 @@ router.get('/admin/pending', auth, checkRole(['admin']), async (req, res) => {
   }
 });
 
+// 3b. ADMIN: LIST ITEMS WITH FILTERS
+router.get('/admin/list', auth, checkRole(['admin']), async (req, res) => {
+  try {
+    const statusFilter = String(req.query.status || 'all').trim();
+    const search = String(req.query.search || '').trim().toLowerCase();
+    const pageRaw = Number(req.query.page);
+    const limitRaw = Number(req.query.limit);
+    const page = Number.isFinite(pageRaw) ? Math.max(1, pageRaw) : 1;
+    const limit = Number.isFinite(limitRaw) ? Math.max(5, Math.min(100, limitRaw)) : 15;
+    const skip = (page - 1) * limit;
+
+    const query = {};
+    if (statusFilter === 'still_to_sell') {
+      query.status = { $in: ['approved', 'hold', 'pending_handover'] };
+    } else if (statusFilter !== 'all') {
+      query.status = statusFilter;
+    }
+
+    const items = await Item.find(query)
+      .populate('seller', 'email phone')
+      .populate('buyer', 'email phone')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const filtered = items.filter((item) => {
+      if (!search) return true;
+      const haystack = [
+        item?.title,
+        item?.category,
+        item?.description,
+        item?.status,
+        item?.seller?.email,
+        item?.buyer?.email,
+        item?.moderation?.note
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(search);
+    });
+
+    const total = filtered.length;
+    const pagedItems = filtered.slice(skip, skip + limit);
+    const statusCounts = filtered.reduce((acc, item) => {
+      const key = String(item?.status || 'unknown');
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    return res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      status: statusFilter,
+      statusCounts,
+      items: pagedItems
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch admin item list.' });
+  }
+});
+
+// 3c. ADMIN: DELETE ANY ITEM
+router.delete('/admin/delete/:id', auth, checkRole(['admin']), async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found.' });
+    }
+
+    await Item.findByIdAndDelete(req.params.id);
+    return res.json({ message: 'Item deleted by admin.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to delete item.' });
+  }
+});
+
 // --- GET SELLER WALLET (Public/Protected) ---
 router.get('/get-wallet/:userId', auth, async (req, res) => {
   try {
@@ -59,10 +138,20 @@ router.get('/get-wallet/:userId', auth, async (req, res) => {
 // 4. ADMIN: VALIDATE
 router.patch('/admin/validate/:id', auth, checkRole(['admin']), async (req, res) => {
   try {
-    const { status, suggestedPrice } = req.body;
+    const { status, suggestedPrice, note } = req.body;
+    const adminUser = await User.findById(req.user.id).select('email');
     const item = await Item.findByIdAndUpdate(
       req.params.id, 
-      { status, suggestedPrice }, 
+      {
+        status,
+        suggestedPrice,
+        moderation: {
+          reviewedBy: req.user.id,
+          reviewedByEmail: adminUser?.email || 'admin',
+          reviewedAt: new Date(),
+          note: String(note || '').slice(0, 240)
+        }
+      }, 
       { returnDocument: 'after' }
     );
     res.json(item);

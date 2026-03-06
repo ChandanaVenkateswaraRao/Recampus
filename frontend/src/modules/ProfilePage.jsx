@@ -7,7 +7,8 @@ import { Eye, Trash2, Edit, Store } from 'lucide-react'; // Add these icons
 
 import { 
   Package, Bike, Home, CheckCircle, ShieldAlert, Key, 
-  ShoppingCart, Loader2, FileText, Calendar, CalendarDays, TrendingUp,
+  ShoppingCart, Loader2, FileText, Calendar, CalendarDays, Star, TrendingUp,
+  TrendingDown,
   User, Phone, Wallet
 } from 'lucide-react';
 import VerificationModal from '../components/shared/VerificationModal.jsx';
@@ -26,7 +27,12 @@ const ProfilePage = () => {
   const [savingPhone, setSavingPhone] = useState(false);
   const [ridesTab, setRidesTab] = useState('passenger');
   const [ridesStatusFilter, setRidesStatusFilter] = useState('all');
-  const [ridesDateFilter, setRidesDateFilter] = useState('');
+  const [ridesDateRange, setRidesDateRange] = useState({ from: '', to: '' });
+  const [ratingRide, setRatingRide] = useState(null);
+  const [ratingAsRole, setRatingAsRole] = useState('passenger');
+  const [ratingScore, setRatingScore] = useState(5);
+  const [ratingReview, setRatingReview] = useState('');
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
   useEffect(() => {
     fetchData();
   }, [activeModule]);
@@ -43,7 +49,7 @@ const ProfilePage = () => {
   }, [ridesTab]);
 
   useEffect(() => {
-    setRidesDateFilter('');
+    setRidesDateRange({ from: '', to: '' });
   }, [ridesTab]);
 
   const fetchData = async () => {
@@ -135,6 +141,28 @@ const ProfilePage = () => {
     });
   };
 
+  const formatCurrency = (amount) => {
+    const value = Number(amount);
+    if (!Number.isFinite(value)) return '-';
+    return `₹${value.toFixed(2)}`;
+  };
+
+  const getRideSettlement = (ride) => {
+    if (!ride || typeof ride !== 'object') return null;
+    if (!ride.settlement || typeof ride.settlement !== 'object') return null;
+    return ride.settlement;
+  };
+
+  const getCaptainSettlementAmount = (ride) => {
+    const settlement = getRideSettlement(ride);
+    const payout = Number(settlement?.captainPayoutAmount);
+    if (Number.isFinite(payout)) return payout;
+
+    const fare = Number(ride?.price);
+    if (!Number.isFinite(fare)) return 0;
+    return Number((fare * 0.90).toFixed(2));
+  };
+
   const openRideRebook = (ride) => {
     if (!ride?.pickupLocation?.address || !ride?.dropLocation?.address) {
       alert('Pickup/drop details are unavailable for this ride.');
@@ -160,6 +188,65 @@ const ProfilePage = () => {
     setRideRole('passenger');
     setActiveModule('Ride');
     setCurrentView('browse');
+  };
+
+  const openRideRatingModal = (ride, roleType) => {
+    setRatingRide(ride || null);
+    setRatingAsRole(roleType === 'captain' ? 'captain' : 'passenger');
+    setRatingScore(5);
+    setRatingReview('');
+  };
+
+  const submitRideRating = async () => {
+    if (!ratingRide?._id) return;
+    if (ratingScore < 1 || ratingScore > 5) {
+      alert('Please choose a rating between 1 and 5 stars.');
+      return;
+    }
+
+    try {
+      setRatingSubmitting(true);
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `http://localhost:5000/api/rides/rate/${ratingRide._id}`,
+        { score: ratingScore, review: ratingReview },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRatingRide(null);
+      setRatingReview('');
+      setRatingScore(5);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Unable to submit rating.');
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
+
+  const raiseRideDispute = async (ride) => {
+    const reason = window.prompt('Describe the issue for this ride dispute (min 5 chars):', 'Payment/service issue');
+    if (reason === null) return;
+    const normalizedReason = String(reason || '').trim();
+    if (normalizedReason.length < 5) {
+      alert('Please enter at least 5 characters for dispute reason.');
+      return;
+    }
+
+    const evidenceText = window.prompt('Optional evidence details (chat, delay context, etc.):', '');
+    if (evidenceText === null) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `http://localhost:5000/api/rides/${ride._id}/dispute`,
+        { reason: normalizedReason, evidenceText: String(evidenceText || '').trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Dispute raised successfully. Admin will review it soon.');
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to raise dispute.');
+    }
   };
 
   // --- UTILITY: Generate Professional Invoice ---
@@ -531,6 +618,7 @@ const ProfilePage = () => {
   const RidesView = ({ passengerRides, captainRides }) => {
     const rides = ridesTab === 'captain' ? captainRides : passengerRides;
     const isPassengerTab = ridesTab === 'passenger';
+    const currentRoleKey = isPassengerTab ? 'passenger' : 'captain';
     const filteredRides = useMemo(() => rides.filter((ride) => {
       const status = String(ride?.status || '').toLowerCase();
       if (ridesStatusFilter === 'completed') return status === 'completed';
@@ -539,7 +627,7 @@ const ProfilePage = () => {
     }), [rides, ridesStatusFilter]);
 
     const dateFilteredRides = useMemo(() => {
-      if (!ridesDateFilter) return filteredRides;
+      if (!ridesDateRange.from && !ridesDateRange.to) return filteredRides;
 
       return filteredRides.filter((ride) => {
         const sourceDate = ride?.createdAt || ride?.updatedAt || ride?.scheduledAt;
@@ -552,9 +640,89 @@ const ProfilePage = () => {
           .toISOString()
           .slice(0, 10);
 
-        return localDate === ridesDateFilter;
+        if (ridesDateRange.from && localDate < ridesDateRange.from) return false;
+        if (ridesDateRange.to && localDate > ridesDateRange.to) return false;
+        return true;
       });
-    }, [filteredRides, ridesDateFilter]);
+    }, [filteredRides, ridesDateRange.from, ridesDateRange.to]);
+
+    const ridesSummary = useMemo(() => {
+      const totalRides = dateFilteredRides.length;
+      const completedRides = dateFilteredRides.filter((ride) => String(ride?.status || '').toLowerCase() === 'completed').length;
+      const cancelledRides = dateFilteredRides.filter((ride) => String(ride?.status || '').toLowerCase() === 'cancelled').length;
+      const totalAmount = dateFilteredRides.reduce((sum, ride) => {
+        if (isPassengerTab) return sum + (Number(ride?.price) || 0);
+        return sum + getCaptainSettlementAmount(ride);
+      }, 0);
+
+      return {
+        totalRides,
+        completedRides,
+        cancelledRides,
+        totalAmount
+      };
+    }, [dateFilteredRides]);
+
+    const ridesTrend = useMemo(() => {
+      const toLocalDate = (value) => {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      };
+
+      const sumAmount = (list) => list.reduce((sum, ride) => sum + (Number(ride?.price) || 0), 0);
+      const toMs = (ymd) => new Date(`${ymd}T00:00:00`).getTime();
+
+      let previousWindowRides = [];
+
+      if (ridesDateRange.from && ridesDateRange.to && ridesDateRange.from <= ridesDateRange.to) {
+        const startMs = toMs(ridesDateRange.from);
+        const endMs = toMs(ridesDateRange.to);
+        const dayMs = 24 * 60 * 60 * 1000;
+        const days = Math.max(1, Math.round((endMs - startMs) / dayMs) + 1);
+
+        const prevEnd = new Date(startMs - dayMs);
+        const prevStart = new Date(prevEnd.getTime() - (days - 1) * dayMs);
+        const prevStartYmd = toLocalDate(prevStart);
+        const prevEndYmd = toLocalDate(prevEnd);
+
+        previousWindowRides = filteredRides.filter((ride) => {
+          const sourceDate = ride?.createdAt || ride?.updatedAt || ride?.scheduledAt;
+          const localDate = sourceDate ? toLocalDate(sourceDate) : null;
+          if (!localDate || !prevStartYmd || !prevEndYmd) return false;
+          return localDate >= prevStartYmd && localDate <= prevEndYmd;
+        });
+      } else {
+        const now = new Date();
+        const dayMs = 24 * 60 * 60 * 1000;
+        const prevEnd = toLocalDate(new Date(now.getTime() - 7 * dayMs));
+        const prevStart = toLocalDate(new Date(now.getTime() - 13 * dayMs));
+
+        previousWindowRides = filteredRides.filter((ride) => {
+          const sourceDate = ride?.createdAt || ride?.updatedAt || ride?.scheduledAt;
+          const localDate = sourceDate ? toLocalDate(sourceDate) : null;
+          if (!localDate || !prevStart || !prevEnd) return false;
+          return localDate >= prevStart && localDate <= prevEnd;
+        });
+      }
+
+      const currentCount = ridesSummary.totalRides;
+      const previousCount = previousWindowRides.length;
+      const currentAmount = ridesSummary.totalAmount;
+      const previousAmount = sumAmount(previousWindowRides);
+
+      const buildTrend = (currentValue, previousValue) => {
+        const delta = currentValue - previousValue;
+        const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+        const percent = previousValue > 0 ? Math.round((Math.abs(delta) / previousValue) * 100) : null;
+        return { delta, direction, percent };
+      };
+
+      return {
+        rides: buildTrend(currentCount, previousCount),
+        amount: buildTrend(currentAmount, previousAmount)
+      };
+    }, [filteredRides, ridesDateRange.from, ridesDateRange.to, ridesSummary.totalAmount, ridesSummary.totalRides]);
 
     return (
     <section className="history-block fade-in">
@@ -600,22 +768,69 @@ const ProfilePage = () => {
       <div className="rides-date-filter-row">
         <div className="rides-date-filter">
           <CalendarDays size={15} />
+          <span>From</span>
           <input
             type="date"
-            value={ridesDateFilter}
-            onChange={(e) => setRidesDateFilter(e.target.value)}
-            aria-label="Filter My Rides by date"
+            value={ridesDateRange.from}
+            onChange={(e) => setRidesDateRange((prev) => ({ ...prev, from: e.target.value }))}
+            aria-label="Filter My Rides from date"
           />
         </div>
-        {ridesDateFilter && (
+
+        <div className="rides-date-filter">
+          <span>To</span>
+          <input
+            type="date"
+            value={ridesDateRange.to}
+            onChange={(e) => setRidesDateRange((prev) => ({ ...prev, to: e.target.value }))}
+            aria-label="Filter My Rides to date"
+          />
+        </div>
+
+        {(ridesDateRange.from || ridesDateRange.to) && (
           <button
             type="button"
             className="rides-date-clear"
-            onClick={() => setRidesDateFilter('')}
+            onClick={() => setRidesDateRange({ from: '', to: '' })}
           >
-            Clear Date
+            Clear Range
           </button>
         )}
+      </div>
+
+      <div className="rides-summary-strip">
+        <div className="rides-summary-card">
+          <span>Total Rides</span>
+          <strong>{ridesSummary.totalRides}</strong>
+          <div className={`rides-summary-trend ${ridesTrend.rides.direction}`}>
+            {ridesTrend.rides.direction === 'up' ? <TrendingUp size={12} /> : ridesTrend.rides.direction === 'down' ? <TrendingDown size={12} /> : <span className="dot" />}
+            <small>
+              {ridesTrend.rides.percent !== null
+                ? `${ridesTrend.rides.percent}% vs previous period`
+                : 'No previous-period baseline'}
+            </small>
+          </div>
+        </div>
+        <div className="rides-summary-card">
+          <span>Completed</span>
+          <strong>{ridesSummary.completedRides}</strong>
+        </div>
+        <div className="rides-summary-card">
+          <span>Cancelled</span>
+          <strong>{ridesSummary.cancelledRides}</strong>
+        </div>
+        <div className="rides-summary-card amount">
+          <span>{isPassengerTab ? 'Total Spend' : 'Total Earnings'}</span>
+          <strong>{formatCurrency(ridesSummary.totalAmount)}</strong>
+          <div className={`rides-summary-trend ${ridesTrend.amount.direction}`}>
+            {ridesTrend.amount.direction === 'up' ? <TrendingUp size={12} /> : ridesTrend.amount.direction === 'down' ? <TrendingDown size={12} /> : <span className="dot" />}
+            <small>
+              {ridesTrend.amount.percent !== null
+                ? `${ridesTrend.amount.percent}% vs previous period`
+                : 'No previous-period baseline'}
+            </small>
+          </div>
+        </div>
       </div>
 
       <div className="history-grid">
@@ -642,14 +857,85 @@ const ProfilePage = () => {
               ) : (
                 <span className="ride-history-note">Rebook is available for passenger rides</span>
               )}
+              {String(ride?.status || '').toLowerCase() === 'completed' && !(isPassengerTab ? ride?.passengerRating?.score : ride?.captainRating?.score) ? (
+                <button
+                  className="small-btn primary"
+                  onClick={() => openRideRatingModal(ride, currentRoleKey)}
+                >
+                  <Star size={13} /> Rate Trip
+                </button>
+              ) : null}
+              {String(ride?.status || '').toLowerCase() === 'completed' && (isPassengerTab ? ride?.passengerRating?.score : ride?.captainRating?.score) ? (
+                <span className="ride-history-note rated">
+                  Rated {isPassengerTab ? ride?.passengerRating?.score : ride?.captainRating?.score}/5
+                </span>
+              ) : null}
               <span>
                 {ride?.pickupLocation?.address || 'Pickup unavailable'}
                 {' ➔ '}
                 {ride?.dropLocation?.address || 'Drop unavailable'}
               </span>
+              {String(ride?.status || '').toLowerCase() === 'cancelled' && ride?.cancellationReason ? (
+                <span className="ride-cancel-reason">Reason: {ride.cancellationReason}</span>
+              ) : null}
+
+              {(() => {
+                const rideStatus = String(ride?.status || '').toLowerCase();
+                const disputeStatus = String(ride?.dispute?.status || 'none').toLowerCase();
+                const canRaiseDispute = ['paid', 'completed', 'cancelled'].includes(rideStatus)
+                  && !['open', 'in_review'].includes(disputeStatus);
+
+                if (!canRaiseDispute && disputeStatus === 'none') return null;
+
+                if (canRaiseDispute) {
+                  return (
+                    <button
+                      type="button"
+                      className="small-btn primary"
+                      onClick={() => raiseRideDispute(ride)}
+                    >
+                      Raise Dispute
+                    </button>
+                  );
+                }
+
+                return (
+                  <span className={`ride-dispute-pill ${disputeStatus}`}>
+                    Dispute: {disputeStatus}
+                  </span>
+                );
+              })()}
+
+              {(() => {
+                const settlement = getRideSettlement(ride);
+                const hasSettlement = Boolean(
+                  settlement && (
+                    Number.isFinite(Number(settlement?.adminEscrowAmount)) ||
+                    Number.isFinite(Number(settlement?.platformFeeAmount)) ||
+                    Number.isFinite(Number(settlement?.captainPayoutAmount)) ||
+                    settlement?.adminEscrowCreditedAt ||
+                    settlement?.captainPaidAt
+                  )
+                );
+
+                if (!hasSettlement) return null;
+
+                return (
+                  <div className="ride-settlement-box">
+                    <span className="ride-settlement-title">Settlement</span>
+                    <div className="ride-settlement-grid">
+                      <span className="ride-settlement-chip">Escrow: {formatCurrency(settlement?.adminEscrowAmount ?? ride?.price)}</span>
+                      <span className="ride-settlement-chip">Platform Fee: {formatCurrency(settlement?.platformFeeAmount ?? ((Number(ride?.price) || 0) * 0.10))}</span>
+                      <span className="ride-settlement-chip success">Captain Payout: {formatCurrency(settlement?.captainPayoutAmount ?? getCaptainSettlementAmount(ride))}</span>
+                      <span className="ride-settlement-chip">Escrow Credited: {formatDate(settlement?.adminEscrowCreditedAt)}</span>
+                      <span className="ride-settlement-chip">Captain Paid: {settlement?.captainPaidAt ? formatDate(settlement.captainPaidAt) : 'Pending'}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
-        )) : <EmptyState msg={ridesDateFilter ? 'No rides found for selected date.' : (isPassengerTab ? 'No passenger rides for this filter.' : 'No captain rides for this filter.')} />}
+        )) : <EmptyState msg={(ridesDateRange.from || ridesDateRange.to) ? 'No rides found for selected date range.' : (isPassengerTab ? 'No passenger rides for this filter.' : 'No captain rides for this filter.')} />}
       </div>
     </section>
     );
@@ -759,6 +1045,42 @@ const ProfilePage = () => {
           onClose={() => setEditingItem(null)} 
           onSuccess={() => { setEditingItem(null); fetchData(); }} 
         />
+      )}
+
+      {ratingRide && (
+        <div className="ride-rating-overlay" role="dialog" aria-modal="true" aria-label="Rate completed ride">
+          <div className="ride-rating-modal">
+            <h3>Rate This Ride</h3>
+            <p>{ratingRide?.route || 'Ride'}</p>
+
+            <div className="ride-rating-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className={star <= ratingScore ? 'active' : ''}
+                  onClick={() => setRatingScore(star)}
+                >
+                  <Star size={16} />
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={ratingReview}
+              onChange={(e) => setRatingReview(e.target.value)}
+              maxLength={280}
+              placeholder="Share quick feedback (optional)"
+            />
+
+            <div className="ride-rating-actions">
+              <button type="button" onClick={() => setRatingRide(null)}>Cancel</button>
+              <button type="button" className="primary" onClick={submitRideRating} disabled={ratingSubmitting}>
+                {ratingSubmitting ? 'Submitting...' : `Submit ${ratingAsRole === 'captain' ? 'Captain' : 'Passenger'} Rating`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

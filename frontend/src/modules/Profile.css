@@ -324,6 +324,75 @@
   background: #f1f5f9;
 }
 
+.rides-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.rides-summary-card {
+  border: 1px solid #dbe3ed;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rides-summary-card span {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.rides-summary-card strong {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.rides-summary-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rides-summary-trend small {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.rides-summary-trend .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.rides-summary-trend.up {
+  color: #0f766e;
+}
+
+.rides-summary-trend.down {
+  color: #b91c1c;
+}
+
+.rides-summary-trend.flat {
+  color: #64748b;
+}
+
+.rides-summary-card.amount {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+@media (max-width: 920px) {
+  .rides-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .ride-history-actions span {
   color: #475569;
   font-size: var(--fs-xs);
@@ -334,6 +403,179 @@
   font-size: var(--fs-xs);
   color: #64748b;
   font-weight: var(--fw-bold);
+}
+
+.ride-cancel-reason {
+  display: inline-flex;
+  align-items: center;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ride-settlement-box {
+  flex-basis: 100%;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.ride-settlement-title {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.ride-settlement-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ride-settlement-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ride-settlement-chip.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.ride-history-note.rated {
+  color: #0f766e;
+}
+
+.ride-dispute-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.ride-dispute-pill.resolved {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.ride-dispute-pill.rejected {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.ride-rating-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 220;
+  padding: 14px;
+}
+
+.ride-rating-modal {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border: 1px solid #dbe3ed;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 20px 38px -20px rgba(15, 23, 42, 0.5);
+}
+
+.ride-rating-modal h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.ride-rating-modal p {
+  margin: 6px 0 12px;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.ride-rating-stars {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ride-rating-stars button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #94a3b8;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ride-rating-stars button.active {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #ea580c;
+}
+
+.ride-rating-modal textarea {
+  width: 100%;
+  min-height: 96px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.86rem;
+}
+
+.ride-rating-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ride-rating-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #475569;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ride-rating-actions button.primary {
+  background: #0d6e67;
+  border-color: #0f766e;
+  color: #ffffff;
 }
 
 /* Elegant Palette v2 */

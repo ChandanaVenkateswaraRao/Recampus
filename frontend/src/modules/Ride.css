@@ -51,6 +51,108 @@
   border-color: rgba(253, 230, 138, 0.45);
 }
 
+.ride-eta-chip {
+  bottom: 62px;
+  left: 20px;
+}
+
+.ride-eta-chip.on_time {
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #065f46;
+  background: rgba(236, 253, 245, 0.96);
+}
+
+.ride-eta-chip.slight_delay {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #92400e;
+  background: rgba(255, 247, 237, 0.96);
+}
+
+.ride-eta-chip.delayed {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #991b1b;
+  background: rgba(254, 242, 242, 0.96);
+}
+
+.ride-eta-chip.updating {
+  border-color: rgba(148, 163, 184, 0.5);
+  color: #334155;
+  background: rgba(248, 250, 252, 0.95);
+}
+
+.ride-live-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.ride-live-warning span {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ride-alert-stack {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 130;
+  width: min(360px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ride-alert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  padding: 8px 10px;
+  box-shadow: 0 10px 22px -16px rgba(15, 23, 42, 0.42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.ride-alert-item.info {
+  border-color: #bfdbfe;
+}
+
+.ride-alert-item.warning {
+  border-color: #fcd34d;
+  background: rgba(255, 251, 235, 0.98);
+}
+
+.ride-alert-item span {
+  flex: 1;
+  font-size: 0.77rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ride-alert-close {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.ride-alert-close:hover {
+  color: #0f172a;
+}
+
 .advanced-marker {
   width: 30px;
   height: 30px;
@@ -91,6 +193,18 @@
 }
 
 @media (max-width: 768px) {
+  .ride-eta-chip {
+    bottom: 54px;
+    left: 12px;
+  }
+
+  .ride-alert-stack {
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
   .rapido-panel {
     top: auto;
     left: 0;
@@ -604,6 +718,25 @@
 
 .rapido-btn.compact {
   min-width: 0;
+}
+
+.ride-safety-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.rapido-btn.share {
+  background: #ecfeff;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+}
+
+.rapido-btn.sos {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 
 .rapido-btn.danger.full,
@@ -1334,6 +1467,52 @@
 .booking-quote-item span,
 .booking-quote-item strong {
   color: #1e40af;
+}
+
+.fare-breakup-card {
+  border: 1px solid #cce8e5;
+  border-radius: 12px;
+  background: #f6fbfb;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.fare-breakup-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0f766e;
+}
+
+.fare-breakup-row,
+.fare-breakup-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.fare-breakup-row span {
+  color: #475569;
+}
+
+.fare-breakup-row strong,
+.fare-breakup-total strong {
+  color: #0f172a;
+}
+
+.fare-breakup-row.muted span,
+.fare-breakup-row.muted strong {
+  color: #64748b;
+}
+
+.fare-breakup-total {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-weight: 800;
 }
 
 /* Ride Layout + Color Refresh */

@@ -723,10 +723,38 @@ router.post('/pay/:id', auth, async (req, res) => {
       return res.status(400).json({ message: "Ride is not ready for payment." });
     }
 
+    if (rideDoc.isPaid || rideDoc.status === 'paid') {
+      return res.status(400).json({ message: 'Ride is already paid.' });
+    }
+
+    const adminUser = await User.findOne({ roles: 'admin' }).sort({ createdAt: 1 }).select('_id walletBalance');
+    if (!adminUser) {
+      return res.status(500).json({ message: 'No admin account found for escrow settlement.' });
+    }
+
+    const fareAmount = Number(rideDoc.price) || 0;
+    const platformFeeAmount = Number((fareAmount * 0.10).toFixed(2));
+    const captainPayoutAmount = Number((fareAmount - platformFeeAmount).toFixed(2));
+
+    await User.findByIdAndUpdate(adminUser._id, { $inc: { walletBalance: fareAmount } });
+
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const ride = await Ride.findByIdAndUpdate(
       req.params.id, 
-      { status: 'paid', isPaid: true, completionCode: otp, paymentDueAt: null },
+      {
+        status: 'paid',
+        isPaid: true,
+        completionCode: otp,
+        paymentDueAt: null,
+        settlement: {
+          adminUser: adminUser._id,
+          adminEscrowAmount: fareAmount,
+          platformFeeAmount,
+          captainPayoutAmount,
+          adminEscrowCreditedAt: new Date(),
+          captainPaidAt: null
+        }
+      },
       { returnDocument: 'after' }
     ).populate('passenger', 'email phone').populate('captain', 'email phone');
     emitRideUpdate(req.app.get('io'), req.app.get('activeUsers'), ride);
@@ -751,13 +779,38 @@ router.post('/verify-completion', auth, checkRole(['rider']), async (req, res) =
     }
 
     if (ride.completionCode === String(code)) {
-      const payout = ride.price * 0.90; // 10% Platform commission
-      await User.findByIdAndUpdate(req.user.id, { $inc: { walletBalance: payout } });
+      const fallbackPayout = Number(((Number(ride.price) || 0) * 0.90).toFixed(2));
+      const captainPayout = Number(ride.settlement?.captainPayoutAmount || fallbackPayout);
+      const adminUserId = ride.settlement?.adminUser;
+
+      if (ride.settlement?.captainPaidAt) {
+        return res.status(400).json({ message: 'Captain payout already released for this ride.' });
+      }
+
+      if (adminUserId) {
+        await User.findByIdAndUpdate(adminUserId, { $inc: { walletBalance: -captainPayout } });
+      }
+
+      await User.findByIdAndUpdate(req.user.id, { $inc: { walletBalance: captainPayout } });
       
       ride.status = 'completed';
+      if (!ride.settlement) {
+        ride.settlement = {};
+      }
+      ride.settlement.captainPayoutAmount = captainPayout;
+      ride.settlement.captainPaidAt = new Date();
       await ride.save();
       emitRideUpdate(req.app.get('io'), req.app.get('activeUsers'), ride);
-      res.json({ message: "Ride Completed! Funds released." });
+      res.json({
+        message: 'Ride Completed! Funds released to captain after platform deduction.',
+        settlement: {
+          adminUser: ride.settlement?.adminUser || null,
+          adminEscrowAmount: ride.settlement?.adminEscrowAmount || Number(ride.price) || 0,
+          platformFeeAmount: ride.settlement?.platformFeeAmount || Number(((Number(ride.price) || 0) * 0.10).toFixed(2)),
+          captainPayoutAmount: captainPayout,
+          captainPaidAt: ride.settlement?.captainPaidAt
+        }
+      });
     } else {
       res.status(400).json({ message: "Invalid Handover Code." });
     }
@@ -767,6 +820,12 @@ router.post('/verify-completion', auth, checkRole(['rider']), async (req, res) =
 // 7. Cancel Ride
 router.patch('/cancel/:id', auth, async (req, res) => {
   try {
+    const cancellationReason = String(req.body?.reason || '').trim();
+
+    if (!cancellationReason || cancellationReason.length < 3) {
+      return res.status(400).json({ message: 'Please provide a cancellation reason (min 3 characters).' });
+    }
+
     const ride = await Ride.findById(req.params.id);
     if (!ride) {
       return res.status(404).json({ message: "Ride not found." });
@@ -779,10 +838,71 @@ router.patch('/cancel/:id', auth, async (req, res) => {
     }
 
     ride.status = 'cancelled';
+    ride.cancelledAt = new Date();
+    ride.cancelledBy = 'passenger';
+    ride.cancellationReason = cancellationReason.slice(0, 180);
     await ride.save();
     emitRideUpdate(req.app.get('io'), req.app.get('activeUsers'), ride);
     res.json({ message: "Ride cancelled", ride });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/:id/dispute', auth, async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    const evidenceText = String(req.body?.evidenceText || '').trim();
+
+    if (reason.length < 5) {
+      return res.status(400).json({ message: 'Please provide a dispute reason (min 5 characters).' });
+    }
+
+    const ride = await Ride.findById(req.params.id);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found.' });
+    }
+
+    const isPassenger = String(ride.passenger) === String(req.user.id);
+    const isCaptain = ride.captain && String(ride.captain) === String(req.user.id);
+    if (!isPassenger && !isCaptain) {
+      return res.status(403).json({ message: 'Only assigned passenger/captain can raise a dispute.' });
+    }
+
+    if (!['paid', 'completed', 'cancelled'].includes(String(ride.status || ''))) {
+      return res.status(400).json({ message: 'Dispute can only be raised after payment/completion/cancellation.' });
+    }
+
+    if (['open', 'in_review'].includes(String(ride?.dispute?.status || 'none'))) {
+      return res.status(400).json({ message: 'An active dispute is already open for this ride.' });
+    }
+
+    ride.dispute = {
+      status: 'open',
+      reason: reason.slice(0, 240),
+      evidenceText: evidenceText.slice(0, 500),
+      openedByRole: isPassenger ? 'passenger' : 'captain',
+      openedByUserId: req.user.id,
+      openedAt: new Date(),
+      resolution: {
+        type: '',
+        amount: 0,
+        note: '',
+        resolvedByUserId: null,
+        resolvedByEmail: '',
+        resolvedAt: null
+      }
+    };
+
+    await ride.save();
+
+    const populatedRide = await Ride.findById(ride._id)
+      .populate('passenger', 'email phone')
+      .populate('captain', 'email phone');
+
+    emitRideUpdate(req.app.get('io'), req.app.get('activeUsers'), populatedRide);
+    return res.json({ message: 'Dispute raised successfully.', ride: populatedRide });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/history', auth, async (req, res) => {
@@ -803,6 +923,132 @@ router.get('/history', auth, async (req, res) => {
       .populate('captain', 'email phone');
 
     return res.json(rides);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/cancellation-analytics', auth, async (req, res) => {
+  try {
+    const role = req.query.role === 'captain' ? 'captain' : 'passenger';
+    const daysRaw = Number(req.query.days);
+    const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(365, daysRaw)) : 30;
+
+    const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const query = {
+      [role]: req.user.id,
+      status: 'cancelled',
+      cancelledAt: { $gte: fromDate }
+    };
+
+    const cancelledRides = await Ride.find(query).select('cancellationReason cancelledAt');
+
+    const reasonCountMap = cancelledRides.reduce((acc, ride) => {
+      const key = String(ride?.cancellationReason || 'Unspecified').trim() || 'Unspecified';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const reasons = Object.entries(reasonCountMap)
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return res.json({
+      totalCancelled: cancelledRides.length,
+      windowDays: days,
+      reasons
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/cancellation-analytics/admin', auth, checkRole(['admin']), async (req, res) => {
+  try {
+    const daysRaw = Number(req.query.days);
+    const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(365, daysRaw)) : 30;
+    const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const cancelledRides = await Ride.find({
+      status: 'cancelled',
+      cancelledAt: { $gte: fromDate }
+    }).select('cancellationReason cancelledAt cancelledBy');
+
+    const reasonCountMap = cancelledRides.reduce((acc, ride) => {
+      const key = String(ride?.cancellationReason || 'Unspecified').trim() || 'Unspecified';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const cancelledByMap = cancelledRides.reduce((acc, ride) => {
+      const key = String(ride?.cancelledBy || 'unspecified').trim() || 'unspecified';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const reasons = Object.entries(reasonCountMap)
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    return res.json({
+      totalCancelled: cancelledRides.length,
+      windowDays: days,
+      reasons,
+      cancelledBy: cancelledByMap
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/rate/:id', auth, async (req, res) => {
+  try {
+    const score = Number(req.body?.score);
+    const review = String(req.body?.review || '').trim();
+
+    if (!Number.isFinite(score) || score < 1 || score > 5) {
+      return res.status(400).json({ message: 'Rating score must be between 1 and 5.' });
+    }
+
+    const ride = await Ride.findById(req.params.id);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found.' });
+    }
+
+    if (ride.status !== 'completed') {
+      return res.status(400).json({ message: 'Only completed rides can be rated.' });
+    }
+
+    const isPassenger = String(ride.passenger) === String(req.user.id);
+    const isCaptain = String(ride.captain) === String(req.user.id);
+
+    if (!isPassenger && !isCaptain) {
+      return res.status(403).json({ message: 'You are not allowed to rate this ride.' });
+    }
+
+    const ratingPayload = {
+      score,
+      review: review.slice(0, 280),
+      ratedAt: new Date()
+    };
+
+    if (isPassenger) {
+      ride.passengerRating = ratingPayload;
+    }
+
+    if (isCaptain) {
+      ride.captainRating = ratingPayload;
+    }
+
+    await ride.save();
+
+    const populated = await Ride.findById(ride._id)
+      .populate('passenger', 'email phone')
+      .populate('captain', 'email phone');
+
+    return res.json({ message: 'Ride rated successfully.', ride: populated });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
