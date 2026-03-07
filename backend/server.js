@@ -35,18 +35,35 @@ const profileRoutes = require('./routes/profileRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = [
+const parseEnvOrigins = () => {
+  const raw = process.env.CORS_ORIGINS || '';
+  return raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+};
+
+const isLocalDevOrigin = (origin) => {
+  // Accept localhost / 127.0.0.1 and private LAN IPs used by Expo web dev servers.
+  return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/i.test(origin);
+};
+
+const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174'
-];
+  'http://127.0.0.1:5174',
+  ...parseEnvOrigins(),
+]);
 
 const corsOriginValidator = (origin, callback) => {
-  if (!origin || allowedOrigins.includes(origin)) {
+  if (!origin) return callback(null, true);
+
+  if (allowedOrigins.has(origin) || isLocalDevOrigin(origin)) {
     return callback(null, true);
   }
-  return callback(new Error('Not allowed by CORS'));
+
+  return callback(new Error(`Not allowed by CORS: ${origin}`));
 };
 
 // 1. Database Connection
@@ -57,6 +74,7 @@ app.use(cors({
   origin: corsOriginValidator,
   credentials: true
 }));
+app.options(/.*/, cors({ origin: corsOriginValidator, credentials: true }));
 
 // 3. Body Parsers (Must be before routes)
 app.use(express.json({ limit: '50mb' }));

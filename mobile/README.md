@@ -4,6 +4,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+## Environment variables
+
+Create `mobile/.env` and define your backend and maps keys.
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:5000/api
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+```
+
+Notes:
+- Expo only auto-exposes variables prefixed with `EXPO_PUBLIC_`.
+- For compatibility, this app also reads `VITE_GOOGLE_MAPS_API_KEY` if present.
+- Restart Metro after changing `.env` values.
+
 1. Install dependencies
 
    ```bash
