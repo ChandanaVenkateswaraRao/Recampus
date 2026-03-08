@@ -14,11 +14,13 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
+    bundleIdentifier: 'com.recampus.mobile',
     config: {
       googleMapsApiKey,
     },
   },
   android: {
+    package: "com.recampus.mobile",
     softwareKeyboardLayoutMode: 'resize',
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',

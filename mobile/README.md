@@ -18,6 +18,21 @@ Notes:
 - For compatibility, this app also reads `VITE_GOOGLE_MAPS_API_KEY` if present.
 - Restart Metro after changing `.env` values.
 
+Google OAuth (mobile):
+- Add these vars in `mobile/.env`:
+   - `EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID=...`
+   - `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=...`
+   - `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=...`
+   - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=...`
+   - `EXPO_PUBLIC_EXPO_OWNER=your_expo_username` (required for Expo Go proxy redirect)
+- In Google Cloud Console, add this Authorized redirect URI for your Web OAuth client:
+   - `https://auth.expo.io/@your_expo_username/mobile` (Expo Go)
+   - `http://localhost:8081/auth` (web local dev)
+
+Important:
+- Google Sign-In on mobile should be tested with an Expo development build, not Expo Go.
+- Expo Go may open Google and then fail on `auth.expo.io` return handoff.
+
 1. Install dependencies
 
    ```bash

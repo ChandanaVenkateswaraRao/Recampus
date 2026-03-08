@@ -1,159 +1,308 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { MapPin, User, ArrowRight, Navigation, Loader2 } from 'lucide-react';
+import { ArrowRight, Navigation, Loader2 } from 'lucide-react';
 
 const CaptainView = ({ user }) => {
+
   const [requests, setRequests] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
   const [otp, setOtp] = useState('');
+  const [routeCoords, setRouteCoords] = useState([]);
 
-  // 1. Radar Polling
+  /* ===========================
+     RADAR POLLING
+  =========================== */
+
   useEffect(() => {
+
     if (activeRide) return;
+
     const loadRadar = async () => {
+
       try {
+
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/rides/requests', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+
+        const res = await axios.get(
+          'http://localhost:5000/api/rides/requests',
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
         setRequests(res.data);
+
       } catch (err) {}
+
     };
+
     loadRadar();
+
     const interval = setInterval(loadRadar, 3000);
+
     return () => clearInterval(interval);
+
   }, [activeRide]);
 
-  // 2. Live Location Broadcaster (Socket.io)
-// Inside CaptainView.jsx
-useEffect(() => {
-  // Only broadcast if the ride is Accepted or Paid
-  if (activeRide && (activeRide.status === 'accepted' || activeRide.status === 'paid')) {
-    
-    const socket = io('http://localhost:5000', {
-      path: '/socket.io',
-      transports: ['polling', 'websocket'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 800,
-      timeout: 20000,
-      withCredentials: true
-    });
-    
-    // Get the Passenger ID from the ride object
-    // Handle both cases: if passenger is an object or just an ID string
-    const passengerId = activeRide.passenger._id || activeRide.passenger;
 
-    console.log("📡 Starting GPS Broadcast for Passenger:", passengerId);
+  /* ===========================
+     FETCH ROAD ROUTE
+  =========================== */
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const coords = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          passengerId: passengerId, // Who should receive this data?
-          rideId: activeRide._id
-        };
-        
-        // EMIT to server
-        socket.emit('update_location', coords);
-      },
-      (err) => console.error("GPS Watch Error:", err),
-      { enableHighAccuracy: true, maximumAge: 0 }
-    );
+  const fetchRoute = async (pickup, drop) => {
 
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-      socket.disconnect();
-    };
-  }
-}, [activeRide]);
+    try {
+
+      const url =
+        `https://router.project-osrm.org/route/v1/driving/` +
+        `${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}` +
+        `?overview=full&geometries=geojson`;
+
+      const res = await axios.get(url);
+
+      const coords = res.data.routes[0].geometry.coordinates;
+
+      const roadRoute = coords.map(c => ({
+        lat: c[1],
+        lng: c[0]
+      }));
+
+      setRouteCoords(roadRoute);
+
+    } catch (err) {
+
+      console.error("Routing error:", err);
+
+    }
+
+  };
+
+
+  /* ===========================
+     SOCKET GPS BROADCAST
+  =========================== */
+
+  useEffect(() => {
+
+    if (activeRide && (activeRide.status === 'accepted' || activeRide.status === 'paid')) {
+
+      const socket = io('http://localhost:5000');
+
+      const passengerId =
+        activeRide.passenger._id || activeRide.passenger;
+
+      const watchId = navigator.geolocation.watchPosition(
+
+        (pos) => {
+
+          socket.emit('update_location', {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            passengerId,
+            rideId: activeRide._id
+          });
+
+        },
+
+        (err) => console.log(err),
+
+        { enableHighAccuracy: true }
+
+      );
+
+      return () => {
+
+        navigator.geolocation.clearWatch(watchId);
+        socket.disconnect();
+
+      };
+
+    }
+
+  }, [activeRide]);
+
+
+  /* ===========================
+     ACCEPT RIDE
+  =========================== */
 
   const handleAccept = async (rideId) => {
+
     try {
+
       const token = localStorage.getItem('token');
-      const res = await axios.patch(`http://localhost:5000/api/rides/accept/${rideId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActiveRide(res.data);
-    } catch (err) { alert("Ride taken by someone else."); }
+
+      const res = await axios.patch(
+        `http://localhost:5000/api/rides/accept/${rideId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const ride = res.data;
+
+      setActiveRide(ride);
+
+      /* Fetch road route */
+
+      if (ride.pickupLocation && ride.dropLocation) {
+
+        fetchRoute(
+          ride.pickupLocation,
+          ride.dropLocation
+        );
+
+      }
+
+    } catch (err) {
+
+      alert("Ride already taken.");
+
+    }
+
   };
+
+
+  /* ===========================
+     COMPLETE RIDE
+  =========================== */
 
   const handleCompleteRide = async () => {
+
     try {
+
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/rides/verify-completion', {
-        rideId: activeRide._id,
-        code: otp
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      
-      alert("Success! Payout added to your wallet.");
+
+      await axios.post(
+        'http://localhost:5000/api/rides/verify-completion',
+        {
+          rideId: activeRide._id,
+          code: otp
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Ride completed successfully");
+
       setActiveRide(null);
       setOtp('');
-    } catch (err) { alert("Invalid Code."); }
+      setRouteCoords([]);
+
+    } catch (err) {
+
+      alert("Invalid OTP");
+
+    }
+
   };
 
-  // --- RENDER ONGOING RIDE ---
+
+  /* ===========================
+     ACTIVE RIDE
+  =========================== */
+
   if (activeRide) {
+
     return (
+
       <div className="captain-active-card fade-in">
+
         <div className="active-header">
-          <Navigation size={20} color="#166534" /> <span>Ongoing Trip</span>
+          <Navigation size={20} color="#166534" />
+          <span>Ongoing Trip</span>
         </div>
-        
+
         <div className="trip-details">
           <h3>{activeRide.route}</h3>
         </div>
 
         {activeRide.status === 'accepted' && (
+
           <div className="waiting-payment-box">
             <Loader2 className="spin" size={20} />
-            <p>Waiting for Passenger to Pay ₹{activeRide.price}</p>
+            <p>Waiting for Passenger Payment ₹{activeRide.price}</p>
           </div>
+
         )}
 
-        {/* If passenger paid, we need to poll to know status changed to paid, or just let Captain type code anytime */}
         <div className="completion-form">
-          <label>Enter Passenger's OTP to complete trip:</label>
-          <input 
-            type="text" placeholder="4-Digit Code" 
-            value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={4}
+
+          <label>Enter Passenger OTP</label>
+
+          <input
+            type="text"
+            value={otp}
+            placeholder="4 Digit Code"
+            onChange={(e) => setOtp(e.target.value)}
+            maxLength={4}
           />
-          <button className="complete-btn" onClick={handleCompleteRide}>Verify & Get Paid</button>
+
+          <button
+            className="complete-btn"
+            onClick={handleCompleteRide}
+          >
+            Verify & Finish Ride
+          </button>
+
         </div>
+
       </div>
+
     );
+
   }
 
-  // --- RENDER RADAR ---
+
+  /* ===========================
+     RADAR VIEW
+  =========================== */
+
   return (
+
     <div className="captain-radar-view fade-in">
+
       <div className="radar-header">
         <div className="pulse-dot"></div>
         <h2>Ride Radar</h2>
-        <p>Looking for students...</p>
+        <p>Looking for passengers...</p>
       </div>
 
       <div className="requests-list">
+
         {requests.length === 0 ? (
-          <div className="empty-radar">No requests right now.</div>
+
+          <div className="empty-radar">
+            No ride requests
+          </div>
+
         ) : (
+
           requests.map(req => (
+
             <div key={req._id} className="request-card-captain">
+
               <div className="req-main">
                 <strong>{req.route}</strong>
                 <span>₹{req.price}</span>
               </div>
-              <button className="accept-btn-mini" onClick={() => handleAccept(req._id)}>
+
+              <button
+                className="accept-btn-mini"
+                onClick={() => handleAccept(req._id)}
+              >
                 Accept <ArrowRight size={14} />
               </button>
+
             </div>
+
           ))
+
         )}
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default CaptainView;

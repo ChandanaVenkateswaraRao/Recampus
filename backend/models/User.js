@@ -1,26 +1,58 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+
   email: { 
     type: String, 
     required: true, 
-    unique: true, 
-    // This regex ensures only @klu.ac.in emails are accepted at the database level
-    match: [/@klu\.ac\.in$/, 'Please use a valid KLU official email address'] 
+    unique: true,
+    lowercase: true,
+    match: [/@klu\.ac\.in$/, 'Please use a valid KLU official email address']
   },
+
   password: { 
     type: String, 
     required: true 
   },
+
   phone: {
     type: String,
     default: ''
   },
+
+  /* =========================
+     EMAIL VERIFICATION
+  ========================= */
+
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  emailOTP: {
+    type: String,
+    default: null
+  },
+
+  emailOTPExpires: {
+    type: Date,
+    default: null
+  },
+
+  /* =========================
+     USER ROLES
+  ========================= */
+
   roles: { 
     type: [String], 
     enum: ['student', 'admin', 'rider'], 
     default: ['student'] 
   },
+
+  /* =========================
+     RIDER STATUS
+  ========================= */
+
   riderStatus: {
     isOnline: { type: Boolean, default: false },
     lastLocation: {
@@ -29,17 +61,34 @@ const userSchema = new mongoose.Schema({
       updatedAt: { type: Date }
     }
   },
-  // Wallet for simulated payouts (Item sales / Ride earnings)
+
+  /* =========================
+     WALLET
+  ========================= */
+
   walletBalance: { 
     type: Number, 
     default: 0 
   },
-  cryptoWalletAddress: { type: String, default: "" } ,
+
+  cryptoWalletAddress: { 
+    type: String, 
+    default: "" 
+  },
+
+  /* =========================
+     USER DATA
+  ========================= */
+
+  wishlist: [
+    { type: mongoose.Schema.Types.ObjectId, ref: 'Item' }
+  ],
+
   createdAt: {
     type: Date,
     default: Date.now
-  },
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
+  }
+
 });
 
 module.exports = mongoose.model('User', userSchema);

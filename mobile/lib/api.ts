@@ -1,3 +1,7 @@
+// Email verification API
+export async function verifyEmail(email: string, code: string) {
+  return api.post('/auth/verify-email', { email, code });
+}
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants/api';
 import { getToken } from '@/lib/storage';

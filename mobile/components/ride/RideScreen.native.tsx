@@ -492,7 +492,7 @@ export default function RideScreen() {
         </View>
       </View>
 
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
+      <View style={{ marginHorizontal: 12, marginBottom: 10 }}>
         <MapView
           provider={PROVIDER_GOOGLE}
           style={styles.map}
@@ -503,7 +503,9 @@ export default function RideScreen() {
           {dropPoint && <Marker coordinate={dropPoint} title="Destination" pinColor="#dc2626" />}
           {previewPath.length > 1 && <Polyline coordinates={previewPath} strokeColor="#1d4ed8" strokeWidth={4} />}
         </MapView>
+      </View>
 
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
         <View style={styles.panel}>
           <View style={styles.segmentRow}>
             <Pressable
@@ -745,7 +747,7 @@ const styles = StyleSheet.create({
   },
   brandBadgeText: { color: '#166534', fontWeight: '800', fontSize: 11 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  map: { height: 280, width: '100%' },
+  map: { height: 340, width: '100%' },
   panel: {
     backgroundColor: '#ffffff',
     marginHorizontal: 12,

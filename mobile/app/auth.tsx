@@ -10,15 +10,17 @@ import {
   Keyboard,
   TouchableWithoutFeedback
 } from 'react-native';
+
 import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 import { useAuth } from '@/context/AuthContext';
 
-type AuthView = 'login' | 'register';
+type AuthView = 'login' | 'register' | 'verify';
 type FieldName = 'email' | 'password' | 'phone' | null;
 
 type AuthInputProps = {
@@ -32,7 +34,6 @@ type AuthInputProps = {
   onBlur: () => void;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 };
 
 const AuthInput = React.memo(function AuthInput({
@@ -45,9 +46,9 @@ const AuthInput = React.memo(function AuthInput({
   onFocus,
   onBlur,
   secureTextEntry,
-  keyboardType = 'default',
-  autoCapitalize = 'none',
+  keyboardType = 'default'
 }: AuthInputProps) {
+
   return (
     <View style={styles.fieldBlock}>
       <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>
@@ -71,7 +72,6 @@ const AuthInput = React.memo(function AuthInput({
           onBlur={onBlur}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
           autoCorrect={false}
         />
       </View>
@@ -80,7 +80,8 @@ const AuthInput = React.memo(function AuthInput({
 });
 
 export default function AuthScreen() {
-  const { token, loading, login, register } = useAuth();
+
+  const { token, loading, login, register, verifyEmail, resendVerification } = useAuth();
 
   const [view, setView] = useState<AuthView>('login');
   const [focusedField, setFocusedField] = useState<FieldName>(null);
@@ -88,6 +89,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
 
   const [busy, setBusy] = useState(false);
 
@@ -98,6 +100,7 @@ export default function AuthScreen() {
   }
 
   const submit = async () => {
+
     const trimmedEmail = email.trim();
     const trimmedPhone = phone.trim();
 
@@ -114,165 +117,313 @@ export default function AuthScreen() {
     if (isRegister && !/^\+?[0-9]{10,15}$/.test(trimmedPhone)) {
       Alert.alert(
         'Invalid Phone',
-        'Please enter a valid phone number (10–15 digits)'
+        'Please enter a valid phone number'
       );
       return;
     }
 
     try {
+
       setBusy(true);
 
       if (view === 'login') {
-        await login(trimmedEmail, password);
+
+        try {
+          await login(trimmedEmail, password);
+        } catch (error: any) {
+
+          const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            'Login failed';
+
+          if (message.includes('verify')) {
+            setView('verify');
+            return;
+          }
+
+          Alert.alert('Error', message);
+        }
+
       } else {
+
         await register({
           email: trimmedEmail,
           password,
           phone: trimmedPhone
         });
+
+        setView('verify');
+
       }
 
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Authentication failed';
-
-      Alert.alert('Error', message);
     } finally {
       setBusy(false);
     }
+
+  };
+
+  const verifyOTP = async () => {
+
+    if (!otp) {
+      Alert.alert("Enter OTP", "Please enter the verification code.");
+      return;
+    }
+
+    try {
+
+      setBusy(true);
+
+      await verifyEmail(email, otp);
+
+      Alert.alert(
+        "Success",
+        "Email verified successfully. Please login."
+      );
+
+      setView("login");
+
+    } catch (err: any) {
+
+      Alert.alert(
+        "Verification Failed",
+        err?.response?.data?.message || "Invalid OTP"
+      );
+
+    } finally {
+      setBusy(false);
+    }
+
+  };
+
+  const resendEmail = async () => {
+
+    try {
+
+      await resendVerification(email);
+
+      Alert.alert(
+        'OTP Sent',
+        'A new verification code has been sent to your email.'
+      );
+
+    } catch (err: any) {
+
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Failed to resend OTP.'
+      );
+
+    }
+
   };
 
   return (
+
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
         <LinearGradient
           colors={['#eef4ff', '#dbeafe', '#c7ddff']}
           style={styles.gradient}
         >
 
-          <KeyboardAwareScrollView
-            enableOnAndroid
-            extraScrollHeight={120}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
-          >
+          {view === 'verify' ? (
 
             <View style={styles.card}>
 
-              <View style={styles.brandRow}>
-                <View style={styles.logo}>
-                  <Text style={styles.logoText}>RC</Text>
-                </View>
-
-                <Text style={styles.brandTitle}>ReCampus</Text>
-              </View>
-
-              <View style={styles.tabSwitch}>
-                <Pressable
-                  style={[styles.tab, view === 'login' && styles.tabActive]}
-                  onPress={() => setView('login')}
-                >
-                  <Text style={[styles.tabText, view === 'login' && styles.tabTextActive]}>
-                    Login
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.tab, view === 'register' && styles.tabActive]}
-                  onPress={() => setView('register')}
-                >
-                  <Text style={[styles.tabText, view === 'register' && styles.tabTextActive]}>
-                    Sign Up
-                  </Text>
-                </Pressable>
-              </View>
-
-              <Text style={styles.title}>
-                {isRegister ? 'Create Account' : 'Welcome Back'}
-              </Text>
+              <Text style={styles.title}>Verify Your Email</Text>
 
               <Text style={styles.subtitle}>
-                {isRegister
-                  ? 'Join ReCampus using your official KLU email.'
-                  : 'Sign in to your KLU community'}
+                Enter the verification code sent to
               </Text>
 
-              <AuthInput
-                label="Email"
-                icon="mail"
-                placeholder="id@klu.ac.in"
-                value={email}
-                onChangeText={setEmail}
-                focused={focusedField === 'email'}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField(null)}
-                keyboardType="email-address"
-              />
+              <Text style={styles.emailText}>{email}</Text>
 
-              {isRegister && (
-                <AuthInput
-                  label="Phone"
-                  icon="phone"
-                  placeholder="10-15 digits"
-                  value={phone}
-                  onChangeText={setPhone}
-                  focused={focusedField === 'phone'}
-                  onFocus={() => setFocusedField('phone')}
-                  onBlur={() => setFocusedField(null)}
-                  keyboardType="phone-pad"
-                />
-              )}
-
-              <AuthInput
-                label="Password"
-                icon="lock"
-                placeholder="Enter password"
-                value={password}
-                onChangeText={setPassword}
-                focused={focusedField === 'password'}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-                secureTextEntry
-              />
+              <View style={styles.otpContainer}>
+                {[0,1,2,3,4,5].map((i) => (
+                  <TextInput
+                    key={i}
+                    style={styles.otpInput}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    value={otp[i] || ""}
+                    onChangeText={(text) => {
+                      const newOtp = otp.split("");
+                      newOtp[i] = text;
+                      setOtp(newOtp.join(""));
+                    }}
+                  />
+                ))}
+              </View>
 
               <Pressable
-                style={[
-                  styles.buttonPrimary,
-                  busy && styles.buttonDisabled
-                ]}
-                onPress={submit}
-                disabled={busy}
+                style={styles.buttonPrimary}
+                onPress={verifyOTP}
               >
                 {busy
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={styles.buttonText}>
-                      {isRegister ? 'Create Account' : 'Sign In'}
+                      Verify OTP
                     </Text>}
               </Pressable>
 
-              <Text style={styles.trustLine}>
-                VERIFIED STUDENT PLATFORM
-              </Text>
+              <Pressable
+                style={styles.buttonSecondary}
+                onPress={resendEmail}
+              >
+                <Text style={styles.secondaryText}>
+                  Resend OTP
+                </Text>
+              </Pressable>
 
             </View>
 
-          </KeyboardAwareScrollView>
+          ) : (
+
+            <KeyboardAwareScrollView
+              enableOnAndroid
+              extraScrollHeight={120}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollContent}
+            >
+
+              <View style={styles.card}>
+
+                <View style={styles.brandRow}>
+                  <View style={styles.logo}>
+                    <Text style={styles.logoText}>RC</Text>
+                  </View>
+                  <Text style={styles.brandTitle}>ReCampus</Text>
+                </View>
+
+                <View style={styles.tabSwitch}>
+
+                  <Pressable
+                    style={[styles.tab, view === 'login' && styles.tabActive]}
+                    onPress={() => setView('login')}
+                  >
+                    <Text style={[styles.tabText, view === 'login' && styles.tabTextActive]}>
+                      Login
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.tab, view === 'register' && styles.tabActive]}
+                    onPress={() => setView('register')}
+                  >
+                    <Text style={[styles.tabText, view === 'register' && styles.tabTextActive]}>
+                      Sign Up
+                    </Text>
+                  </Pressable>
+
+                </View>
+
+                <Text style={styles.title}>
+                  {isRegister ? 'Create Account' : 'Welcome Back'}
+                </Text>
+
+                <Text style={styles.subtitle}>
+                  {isRegister
+                    ? 'Join ReCampus using your official KLU email.'
+                    : 'Sign in to your KLU community'}
+                </Text>
+
+                <AuthInput
+                  label="Email"
+                  icon="mail"
+                  placeholder="id@klu.ac.in"
+                  value={email}
+                  onChangeText={setEmail}
+                  focused={focusedField === 'email'}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                  keyboardType="email-address"
+                />
+
+                {isRegister && (
+                  <AuthInput
+                    label="Phone"
+                    icon="phone"
+                    placeholder="10-15 digits"
+                    value={phone}
+                    onChangeText={setPhone}
+                    focused={focusedField === 'phone'}
+                    onFocus={() => setFocusedField('phone')}
+                    onBlur={() => setFocusedField(null)}
+                    keyboardType="phone-pad"
+                  />
+                )}
+
+                <AuthInput
+                  label="Password"
+                  icon="lock"
+                  placeholder="Enter password"
+                  value={password}
+                  onChangeText={setPassword}
+                  focused={focusedField === 'password'}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  secureTextEntry
+                />
+
+                <Pressable
+                  style={[styles.buttonPrimary, busy && styles.buttonDisabled]}
+                  onPress={submit}
+                  disabled={busy}
+                >
+                  {busy
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={styles.buttonText}>
+                        {isRegister ? 'Create Account' : 'Sign In'}
+                      </Text>}
+                </Pressable>
+
+                <Text style={styles.trustLine}>
+                  VERIFIED STUDENT PLATFORM
+                </Text>
+
+              </View>
+
+            </KeyboardAwareScrollView>
+
+          )}
 
         </LinearGradient>
+
       </TouchableWithoutFeedback>
+
     </SafeAreaView>
+
   );
 }
 
+
 const styles = StyleSheet.create({
 
+  otpContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 20,
+  marginBottom: 10
+},
+
+otpInput: {
+  width: 45,
+  height: 50,
+  borderWidth: 1,
+  borderColor: '#dbeafe',
+  borderRadius: 10,
+  textAlign: 'center',
+  fontSize: 18,
+  fontWeight: '700',
+  backgroundColor: '#f8fbff'
+},
+
 container: {
-flex: 1,
-backgroundColor: '#eef4ff'
+flex: 1
 },
 
 gradient: {
@@ -360,6 +511,11 @@ color: '#64748b',
 marginBottom: 15
 },
 
+emailText: {
+fontWeight: '700',
+marginTop: 8
+},
+
 fieldBlock: {
 marginBottom: 12
 },
@@ -413,6 +569,11 @@ borderRadius: 12,
 alignItems: 'center'
 },
 
+buttonSecondary: {
+marginTop: 10,
+alignItems: 'center'
+},
+
 buttonDisabled: {
 opacity: 0.6
 },
@@ -421,6 +582,11 @@ buttonText: {
 color: '#fff',
 fontWeight: '700',
 fontSize: 15
+},
+
+secondaryText: {
+color: '#1d4ed8',
+fontWeight: '600'
 },
 
 trustLine: {
