@@ -38,4 +38,13 @@ const sendEmail = async ({ to, subject, text, html }) => {
 
 };
 
+
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error("SMTP connection error:", error);
+  } else {
+    console.log("SMTP server ready");
+  }
+});
+
 module.exports = sendEmail;
