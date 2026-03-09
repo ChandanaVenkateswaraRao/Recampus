@@ -1,14 +1,90 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { io } from 'socket.io-client';
-import { ArrowRight, Navigation, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 const CaptainView = ({ user }) => {
 
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
+
   const [requests, setRequests] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
-  const [otp, setOtp] = useState('');
+
+  const [captainLocation, setCaptainLocation] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
+
+  const [otp, setOtp] = useState("");
+
+  /* ===========================
+     POLYLINE DECODER
+  =========================== */
+
+  const decodePolyline = (encoded) => {
+
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+    const coordinates = [];
+
+    while (index < encoded.length) {
+
+      let result = 0;
+      let shift = 0;
+      let byte;
+
+      do {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+
+      const deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lat += deltaLat;
+
+      result = 0;
+      shift = 0;
+
+      do {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+
+      const deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lng += deltaLng;
+
+      coordinates.push({
+        lat: lat / 1e5,
+        lng: lng / 1e5
+      });
+
+    }
+
+    return coordinates;
+  };
+
+  /* ===========================
+     CAPTAIN LOCATION
+  =========================== */
+
+  useEffect(() => {
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setCaptainLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        });
+      },
+      () => {},
+      { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+
+  }, []);
 
   /* ===========================
      RADAR POLLING
@@ -22,16 +98,16 @@ const CaptainView = ({ user }) => {
 
       try {
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
         const res = await axios.get(
-          'http://localhost:5000/api/rides/requests',
+          "https://recampus-backend.onrender.com/api/rides/requests",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         setRequests(res.data);
 
-      } catch (err) {}
+      } catch {}
 
     };
 
@@ -43,84 +119,6 @@ const CaptainView = ({ user }) => {
 
   }, [activeRide]);
 
-
-  /* ===========================
-     FETCH ROAD ROUTE
-  =========================== */
-
-  const fetchRoute = async (pickup, drop) => {
-
-    try {
-
-      const url =
-        `https://router.project-osrm.org/route/v1/driving/` +
-        `${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}` +
-        `?overview=full&geometries=geojson`;
-
-      const res = await axios.get(url);
-
-      const coords = res.data.routes[0].geometry.coordinates;
-
-      const roadRoute = coords.map(c => ({
-        lat: c[1],
-        lng: c[0]
-      }));
-
-      setRouteCoords(roadRoute);
-
-    } catch (err) {
-
-      console.error("Routing error:", err);
-
-    }
-
-  };
-
-
-  /* ===========================
-     SOCKET GPS BROADCAST
-  =========================== */
-
-  useEffect(() => {
-
-    if (activeRide && (activeRide.status === 'accepted' || activeRide.status === 'paid')) {
-
-      const socket = io('http://localhost:5000');
-
-      const passengerId =
-        activeRide.passenger._id || activeRide.passenger;
-
-      const watchId = navigator.geolocation.watchPosition(
-
-        (pos) => {
-
-          socket.emit('update_location', {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            passengerId,
-            rideId: activeRide._id
-          });
-
-        },
-
-        (err) => console.log(err),
-
-        { enableHighAccuracy: true }
-
-      );
-
-      return () => {
-
-        navigator.geolocation.clearWatch(watchId);
-        socket.disconnect();
-
-      };
-
-    }
-
-  }, [activeRide]);
-
-
   /* ===========================
      ACCEPT RIDE
   =========================== */
@@ -129,10 +127,10 @@ const CaptainView = ({ user }) => {
 
     try {
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
 
       const res = await axios.patch(
-        `http://localhost:5000/api/rides/accept/${rideId}`,
+        `https://recampus-backend.onrender.com/api/rides/accept/${rideId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -141,106 +139,87 @@ const CaptainView = ({ user }) => {
 
       setActiveRide(ride);
 
-      /* Fetch road route */
-
-      if (ride.pickupLocation && ride.dropLocation) {
-
-        fetchRoute(
-          ride.pickupLocation,
-          ride.dropLocation
-        );
-
+      if (ride.polyline) {
+        const decoded = decodePolyline(ride.polyline);
+        setRouteCoords(decoded);
       }
 
-    } catch (err) {
-
+    } catch {
       alert("Ride already taken.");
-
     }
 
   };
 
-
   /* ===========================
-     COMPLETE RIDE
-  =========================== */
-
-  const handleCompleteRide = async () => {
-
-    try {
-
-      const token = localStorage.getItem('token');
-
-      await axios.post(
-        'http://localhost:5000/api/rides/verify-completion',
-        {
-          rideId: activeRide._id,
-          code: otp
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("Ride completed successfully");
-
-      setActiveRide(null);
-      setOtp('');
-      setRouteCoords([]);
-
-    } catch (err) {
-
-      alert("Invalid OTP");
-
-    }
-
-  };
-
-
-  /* ===========================
-     ACTIVE RIDE
+     ACTIVE RIDE VIEW
   =========================== */
 
   if (activeRide) {
 
+    const pickup = activeRide.pickupLocation;
+    const drop = activeRide.dropLocation;
+
     return (
 
-      <div className="captain-active-card fade-in">
+      <div style={{ height: "100vh", width: "100%" }}>
 
-        <div className="active-header">
-          <Navigation size={20} color="#166534" />
-          <span>Ongoing Trip</span>
-        </div>
+        {isLoaded && (
 
-        <div className="trip-details">
-          <h3>{activeRide.route}</h3>
-        </div>
+          <GoogleMap
+            center={pickup}
+            zoom={14}
+            mapContainerStyle={{ height: "70%", width: "100%" }}
+          >
 
-        {activeRide.status === 'accepted' && (
+            <MarkerF position={pickup} label="P" />
 
-          <div className="waiting-payment-box">
-            <Loader2 className="spin" size={20} />
-            <p>Waiting for Passenger Payment ₹{activeRide.price}</p>
-          </div>
+            <MarkerF position={drop} label="D" />
+
+            {captainLocation && (
+              <MarkerF position={captainLocation} label="C" />
+            )}
+
+            {routeCoords.length > 0 && (
+
+              <PolylineF
+                path={routeCoords}
+                options={{
+                  strokeColor: "#2563eb",
+                  strokeWeight: 5
+                }}
+              />
+
+            )}
+
+          </GoogleMap>
 
         )}
 
-        <div className="completion-form">
+        <div className="captain-active-card">
 
-          <label>Enter Passenger OTP</label>
+          <h3>{activeRide.route}</h3>
 
-          <input
-            type="text"
-            value={otp}
-            placeholder="4 Digit Code"
-            onChange={(e) => setOtp(e.target.value)}
-            maxLength={4}
-          />
+          {activeRide.status === "accepted" && (
+            <div>
+              <Loader2 className="spin" size={20} />
+              Waiting for Passenger Payment ₹{activeRide.price}
+            </div>
+          )}
 
-          <button
-            className="complete-btn"
-            onClick={handleCompleteRide}
-          >
-            Verify & Finish Ride
-          </button>
+          <div>
+
+            <input
+              type="text"
+              value={otp}
+              placeholder="Enter OTP"
+              onChange={(e) => setOtp(e.target.value)}
+            />
+
+            <button>
+              Verify & Finish Ride
+            </button>
+
+          </div>
 
         </div>
 
@@ -250,54 +229,29 @@ const CaptainView = ({ user }) => {
 
   }
 
-
   /* ===========================
      RADAR VIEW
   =========================== */
 
   return (
 
-    <div className="captain-radar-view fade-in">
+    <div>
 
-      <div className="radar-header">
-        <div className="pulse-dot"></div>
-        <h2>Ride Radar</h2>
-        <p>Looking for passengers...</p>
-      </div>
+      <h2>Ride Radar</h2>
 
-      <div className="requests-list">
+      {requests.map(req => (
 
-        {requests.length === 0 ? (
+        <div key={req._id}>
 
-          <div className="empty-radar">
-            No ride requests
-          </div>
+          <strong>{req.route}</strong> ₹{req.price}
 
-        ) : (
+          <button onClick={() => handleAccept(req._id)}>
+            Accept <ArrowRight size={14} />
+          </button>
 
-          requests.map(req => (
+        </div>
 
-            <div key={req._id} className="request-card-captain">
-
-              <div className="req-main">
-                <strong>{req.route}</strong>
-                <span>₹{req.price}</span>
-              </div>
-
-              <button
-                className="accept-btn-mini"
-                onClick={() => handleAccept(req._id)}
-              >
-                Accept <ArrowRight size={14} />
-              </button>
-
-            </div>
-
-          ))
-
-        )}
-
-      </div>
+      ))}
 
     </div>
 

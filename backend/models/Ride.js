@@ -17,6 +17,7 @@ const rideSchema = new mongoose.Schema({
     lng: { type: Number },
     address: { type: String }
   },
+  polyline: { type: String },
   distanceKm: { type: Number },
   etaMin: { type: Number },
   scheduledAt: { type: Date },

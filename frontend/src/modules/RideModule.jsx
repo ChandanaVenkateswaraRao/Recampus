@@ -25,8 +25,8 @@ const KARE_CENTER = { lat: 9.5115, lng: 77.6766 };
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 const GOOGLE_MAP_ID = (import.meta.env.VITE_GOOGLE_MAP_ID || '').trim();
 const MAP_LIBRARIES = ['marker'];
-const API_RIDE = 'http://localhost:5000/api/rides';
-const API_AUTH = 'http://localhost:5000/api/auth';
+const API_RIDE = 'https://recampus-backend.onrender.com/api/rides';
+const API_AUTH = 'https://recampus-backend.onrender.com/api/auth';
 const RIDE_REBOOK_DRAFT_KEY = 'recampus_ride_rebook_draft';
 const RIDE_SOS_PHONE = import.meta.env.VITE_RIDE_SOS_PHONE || '112';
 
@@ -307,7 +307,8 @@ const RideMapView = React.memo(function RideMapView({
         />
       )}
 
-      {!hasPassengerRide && role === 'passenger' && previewPath.length > 1 && (
+      {/* MAIN TRIP ROUTE (pickup → drop) */}
+      {previewPath.length > 1 && (
         <PolylineF
           path={previewPath}
           options={{
@@ -318,9 +319,10 @@ const RideMapView = React.memo(function RideMapView({
         />
       )}
 
-      {displayCaptainPoint && targetPoint && (
+      {/* CAPTAIN NAVIGATION (captain → pickup) */}
+      {displayCaptainPoint && pickupPoint && (
         <PolylineF
-          path={[displayCaptainPoint, targetPoint]}
+          path={[displayCaptainPoint, pickupPoint]}
           options={{
             strokeColor: '#111827',
             strokeOpacity: 0.85,
@@ -1847,20 +1849,24 @@ const RideModule = ({ user }) => {
 
       <div className="rapido-map-layer">
         <RideMapView
-          isMapLoaded={isMapLoaded}
-          hasGoogleKey={Boolean(GOOGLE_MAPS_KEY)}
-          mapId={GOOGLE_MAP_ID}
-          onMapClick={handleMapPickClick}
-          mapCenter={mapCenter}
-          pickupPoint={pickupPoint}
-          dropPoint={dropPoint}
-          previewPath={previewPath}
-          hasPassengerRide={hasPassengerRide}
-          role={role}
-          mapCaptainPoint={visualCaptainPoint}
-          targetPoint={targetPoint}
-          trackingText={trackingText}
-        />
+            isMapLoaded={isMapLoaded}
+            hasGoogleKey={Boolean(GOOGLE_MAPS_KEY)}
+            mapId={GOOGLE_MAP_ID}
+            onMapClick={handleMapPickClick}
+            mapCenter={mapCenter}
+            pickupPoint={pickupPoint}
+            dropPoint={dropPoint}
+            previewPath={
+              previewPath.length
+                ? previewPath
+                : decodePolyline(activeRide?.polyline)
+            }
+            hasPassengerRide={hasPassengerRide}
+            role={role}
+            mapCaptainPoint={visualCaptainPoint}
+            targetPoint={targetPoint}
+            trackingText={trackingText}
+          />
 
         {(hasPassengerRide || hasCaptainRide) && (
           <div className="ride-live-chip">

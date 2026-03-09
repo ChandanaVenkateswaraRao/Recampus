@@ -16,8 +16,8 @@ const VerificationModal = ({ type, id, title, amount, onClose, onSuccess }) => {
       const token = localStorage.getItem('token');
       // Adjusting endpoint based on whether it's an Item or a Ride
       const endpoint = type === 'item' 
-        ? 'http://localhost:5000/api/items/verify-handover' 
-        : 'http://localhost:5000/api/rides/verify-completion';
+        ? 'https://recampus-backend.onrender.com/api/items/verify-handover' 
+        : 'https://recampus-backend.onrender.com/api/rides/verify-completion';
       
       const payload = type === 'item' ? { itemId: id, code } : { rideId: id, code };
 

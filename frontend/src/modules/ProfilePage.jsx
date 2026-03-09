@@ -58,12 +58,12 @@ const ProfilePage = () => {
       const token = localStorage.getItem('token');
       
       // 1. Fetch Module History
-      const resHistory = await axios.get(`http://localhost:5000/api/profile/${activeModule}`, {
+      const resHistory = await axios.get(`https://recampus-backend.onrender.com/api/profile/${activeModule}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       // 2. Fetch User Profile (for Wallet Address & Roles)
-      const resUser = await axios.get('http://localhost:5000/api/auth/profile', {
+      const resUser = await axios.get('https://recampus-backend.onrender.com/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -80,7 +80,7 @@ const ProfilePage = () => {
   const handleAcceptPrice = async (itemId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:5000/api/items/accept-suggestion/${itemId}`, {}, {
+      await axios.patch(`https://recampus-backend.onrender.com/api/items/accept-suggestion/${itemId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert("Price accepted! Item is now live.");
@@ -92,7 +92,7 @@ const ProfilePage = () => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/items/${id}`, {
+      await axios.delete(`https://recampus-backend.onrender.com/api/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData(); // Refresh
@@ -103,7 +103,7 @@ const ProfilePage = () => {
     if (!window.confirm("Mark this item as sold offline? It will be removed from the marketplace.")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:5000/api/items/sold-offline/${id}`, {}, {
+      await axios.patch(`https://recampus-backend.onrender.com/api/items/sold-offline/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData(); // Refresh
@@ -208,7 +208,7 @@ const ProfilePage = () => {
       setRatingSubmitting(true);
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/rides/rate/${ratingRide._id}`,
+        `https://recampus-backend.onrender.com/api/rides/rate/${ratingRide._id}`,
         { score: ratingScore, review: ratingReview },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -238,7 +238,7 @@ const ProfilePage = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/rides/${ride._id}/dispute`,
+        `https://recampus-backend.onrender.com/api/rides/${ride._id}/dispute`,
         { reason: normalizedReason, evidenceText: String(evidenceText || '').trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -423,7 +423,7 @@ const ProfilePage = () => {
       const fetchWishlist = async () => {
         try {
           const token = localStorage.getItem('token');
-          const res = await axios.get('http://localhost:5000/api/items/wishlist/my', {
+          const res = await axios.get('https://recampus-backend.onrender.com/api/items/wishlist/my', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setWishlistItems(res.data);
@@ -466,7 +466,7 @@ const ProfilePage = () => {
                    e.stopPropagation();
                    try {
                      const token = localStorage.getItem('token');
-                     await axios.post(`http://localhost:5000/api/items/wishlist/toggle/${item._id}`, {}, {
+                     await axios.post(`https://recampus-backend.onrender.com/api/items/wishlist/toggle/${item._id}`, {}, {
                        headers: { Authorization: `Bearer ${token}` }
                      });
                      handleRemove(item._id);

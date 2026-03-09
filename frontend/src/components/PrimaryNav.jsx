@@ -19,7 +19,7 @@ const PrimaryNav = ({ user, onLogout }) => {
     // For now, we will just handle live ones for the demo.
 
     // 2. Connect to Socket Server
-    const socket = io('http://localhost:5000', {
+    const socket = io('https://recampus-backend.onrender.com/', {
       path: '/socket.io',
       transports: ['polling', 'websocket'],
       reconnection: true,

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/items';
+const API_URL = 'https://recampus-backend.onrender.com/api/items';
 const getHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
 export const listNewItem = (data) => axios.post(`${API_URL}/list`, data, getHeaders());

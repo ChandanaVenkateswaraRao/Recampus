@@ -59,7 +59,7 @@ function App() {
       // If we have a token but no user object, fetch it from the API
       if (token && !user) {
         try {
-          const res = await axios.get('http://localhost:5000/api/auth/profile', {
+          const res = await axios.get('https://recampus-backend.onrender.com/api/auth/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUser(res.data);

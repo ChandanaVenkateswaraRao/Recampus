@@ -16,7 +16,7 @@ const ItemDetailModal = ({ item, onClose, onBuy, onSwitchItem }) => {
     // 1. Increment View Count
     const incrementView = async () => {
       try {
-        const res = await axios.patch(`http://localhost:5000/api/items/view/${item._id}`);
+        const res = await axios.patch(`https://recampus-backend.onrender.com/api/items/view/${item._id}`);
         if (res.data.views) setViewCount(res.data.views);
       } catch (err) {}
     };
@@ -26,7 +26,7 @@ const ItemDetailModal = ({ item, onClose, onBuy, onSwitchItem }) => {
     const fetchSimilar = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/items/browse', {
+        const res = await axios.get('https://recampus-backend.onrender.com/api/items/browse', {
           headers: { Authorization: `Bearer ${token}` }
         });
         

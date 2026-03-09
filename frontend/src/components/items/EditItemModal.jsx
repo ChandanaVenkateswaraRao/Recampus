@@ -16,7 +16,7 @@ const EditItemModal = ({ item, onClose, onSuccess }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:5000/api/items/edit/${item._id}`, formData, {
+      await axios.patch(`https://recampus-backend.onrender.com/api/items/edit/${item._id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert("Item updated! It has been sent to the Admin for re-approval.");

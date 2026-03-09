@@ -29,7 +29,7 @@ const ActiveRideStatus = ({ ride, setRide }) => {
     try {
       const token = localStorage.getItem('token');
       // Call backend to mark ride as paid and generate OTP
-      const res = await axios.post(`http://localhost:5000/api/rides/pay/${ride._id}`, {}, {
+      const res = await axios.post(`https://recampus-backend.onrender.com/api/rides/pay/${ride._id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRide(prev => ({ ...prev, status: 'paid', completionCode: res.data.code }));

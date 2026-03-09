@@ -406,7 +406,7 @@ router.post('/route-estimate', auth, async (req, res) => {
 // 1. Passenger requests a ride
 router.post('/request', auth, async (req, res) => {
   try {
-    const { type, routeId, route, price, scheduledAt, pickupLocation, dropLocation, distanceKm } = req.body;
+    const { type, routeId, route, price, scheduledAt, pickupLocation, dropLocation, distanceKm, polyline } = req.body;
     if (!['on-spot', 'pre-booking'].includes(type)) {
       return res.status(400).json({ message: "Invalid ride request payload." });
     }
@@ -457,19 +457,20 @@ router.post('/request', auth, async (req, res) => {
     }
 
     const ride = new Ride({
-      passenger: req.user.id,
-      type,
-      status,
-      officialRouteId: officialRoute?.id,
-      route: resolvedRoute,
-      price: resolvedPrice,
-      distanceKm: resolvedDistanceKm,
-      etaMin: resolvedEtaMin,
-      pickupLocation: resolvedPickup,
-      dropLocation: resolvedDrop,
-      scheduledAt: scheduleDate,
-      searchExpiresAt: type === 'on-spot' ? new Date(Date.now() + 6 * 60 * 1000) : undefined
-    });
+        passenger: req.user.id,
+        type,
+        status,
+        officialRouteId: officialRoute?.id,
+        route: resolvedRoute,
+        price: resolvedPrice,
+        distanceKm: resolvedDistanceKm,
+        etaMin: resolvedEtaMin,
+        pickupLocation: resolvedPickup,
+        dropLocation: resolvedDrop,
+        polyline: polyline || "",   // ADD THIS
+        scheduledAt: scheduleDate,
+        searchExpiresAt: type === 'on-spot' ? new Date(Date.now() + 6 * 60 * 1000) : undefined
+      });
     await ride.save();
 
     

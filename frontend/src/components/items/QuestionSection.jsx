@@ -16,7 +16,7 @@ const QuestionSection = ({ item }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await axios.get('http://localhost:5000/api/auth/profile', {
+        const res = await axios.get('https://recampus-backend.onrender.com/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCurrentUserId(res.data._id);
@@ -34,7 +34,7 @@ const QuestionSection = ({ item }) => {
     if (!newQ.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`http://localhost:5000/api/items/question/${item._id}`, 
+      const res = await axios.post(`https://recampus-backend.onrender.com/api/items/question/${item._id}`, 
         { question: newQ }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -47,7 +47,7 @@ const QuestionSection = ({ item }) => {
     if (!replyText.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`http://localhost:5000/api/items/answer/${item._id}/${qId}`, 
+      const res = await axios.post(`https://recampus-backend.onrender.com/api/items/answer/${item._id}/${qId}`, 
         { answer: replyText }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );

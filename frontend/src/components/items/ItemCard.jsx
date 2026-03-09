@@ -16,7 +16,7 @@ const ItemCard = ({ item, onBuy, onView }) => {
     try {
       const token = localStorage.getItem('token');
       // Call backend to toggle
-      await axios.post(`http://localhost:5000/api/items/wishlist/toggle/${item._id}`, {}, {
+      await axios.post(`https://recampus-backend.onrender.com/api/items/wishlist/toggle/${item._id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (err) {

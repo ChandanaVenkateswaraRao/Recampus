@@ -84,7 +84,7 @@ const SellItemForm = ({ onSuccess }) => {
     
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/items/list', formData, {
+      await axios.post('https://recampus-backend.onrender.com/api/items/list', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSubmitted(true);

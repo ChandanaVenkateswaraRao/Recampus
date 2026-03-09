@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Zap, Clock, MapPin, Navigation, ArrowRight, Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import axios from "axios";
+import { Zap, Clock, MapPin, Navigation, ArrowRight, Loader2 } from "lucide-react";
 
 const PassengerView = ({ setActiveRide }) => {
 
-  const [tab, setTab] = useState('quick'); 
+  const [tab, setTab] = useState("quick");
   const [loading, setLoading] = useState(false);
-  const [customData, setCustomData] = useState({ start: '', end: '' });
+  const [customData, setCustomData] = useState({ start: "", end: "" });
 
-  // Fixed KARE Routes with coordinates
+  // Fixed Routes
   const fixedRoutes = [
     {
       id: 1,
@@ -44,16 +44,42 @@ const PassengerView = ({ setActiveRide }) => {
     }
   ];
 
+  /* ===========================
+     FETCH ROUTE ESTIMATE
+  =========================== */
+
+  const fetchRouteEstimate = async (pickup, destination, pickupCoords, dropCoords) => {
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      "https://recampus-backend.onrender.com/api/rides/route-estimate",
+      {
+        pickup,
+        destination,
+        pickupLocation: pickupCoords,
+        dropLocation: dropCoords
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return res.data;
+  };
+
+  /* ===========================
+     REQUEST RIDE
+  =========================== */
+
   const handleRequest = async (routeData) => {
 
     setLoading(true);
 
     try {
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        'http://localhost:5000/api/rides/request',
+        "https://recampus-backend.onrender.com/api/rides/request",
         routeData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -84,15 +110,15 @@ const PassengerView = ({ setActiveRide }) => {
       <div className="ride-tabs">
 
         <button
-          className={tab === 'quick' ? 'active' : ''}
-          onClick={() => setTab('quick')}
+          className={tab === "quick" ? "active" : ""}
+          onClick={() => setTab("quick")}
         >
           <Zap size={16} /> Quick Routes
         </button>
 
         <button
-          className={tab === 'custom' ? 'active' : ''}
-          onClick={() => setTab('custom')}
+          className={tab === "custom" ? "active" : ""}
+          onClick={() => setTab("custom")}
         >
           <Clock size={16} /> Custom
         </button>
@@ -101,7 +127,7 @@ const PassengerView = ({ setActiveRide }) => {
 
       <div className="ride-selection-area">
 
-        {tab === 'quick' ? (
+        {tab === "quick" ? (
 
           <div className="quick-routes-list">
 
@@ -132,25 +158,25 @@ const PassengerView = ({ setActiveRide }) => {
 
                   <button
                     disabled={loading}
-                    onClick={() =>
+                    onClick={async () => {
+
+                      const estimate = await fetchRouteEstimate(
+                        route.from,
+                        route.to,
+                        route.start,
+                        route.end
+                      );
+
                       handleRequest({
-                        type: 'on-spot',
-                        route: `${route.from} ➔ ${route.to}`,
+                        type: "on-spot",
+                        route: estimate.route,
                         price: route.price,
+                        pickupLocation: estimate.pickupLocation,
+                        dropLocation: estimate.dropLocation,
+                        polyline: estimate.polyline
+                      });
 
-                        pickupLocation: {
-                          lat: route.start.lat,
-                          lng: route.start.lng,
-                          address: route.from
-                        },
-
-                        dropLocation: {
-                          lat: route.end.lat,
-                          lng: route.end.lng,
-                          address: route.to
-                        }
-                      })
-                    }
+                    }}
                   >
                     {loading
                       ? <Loader2 className="spin" size={18} />
@@ -176,6 +202,7 @@ const PassengerView = ({ setActiveRide }) => {
               <input
                 type="text"
                 placeholder="Pickup location..."
+                value={customData.start}
                 onChange={(e) =>
                   setCustomData({
                     ...customData,
@@ -193,6 +220,7 @@ const PassengerView = ({ setActiveRide }) => {
               <input
                 type="text"
                 placeholder="Destination..."
+                value={customData.end}
                 onChange={(e) =>
                   setCustomData({
                     ...customData,
@@ -206,13 +234,23 @@ const PassengerView = ({ setActiveRide }) => {
             <button
               className="confirm-request-btn"
               disabled={loading || !customData.start || !customData.end}
-              onClick={() =>
+              onClick={async () => {
+
+                const estimate = await fetchRouteEstimate(
+                  customData.start,
+                  customData.end
+                );
+
                 handleRequest({
-                  type: 'pre-booking',
-                  route: `${customData.start} ➔ ${customData.end}`,
-                  price: 40
-                })
-              }
+                  type: "pre-booking",
+                  route: estimate.route,
+                  price: 40,
+                  pickupLocation: estimate.pickupLocation,
+                  dropLocation: estimate.dropLocation,
+                  polyline: estimate.polyline
+                });
+
+              }}
             >
               {loading ? "Searching..." : "Confirm Request"}
             </button>

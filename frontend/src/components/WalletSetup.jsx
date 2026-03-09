@@ -18,7 +18,7 @@ const WalletSetup = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       // You need to create this route in backend
-      await axios.patch('http://localhost:5000/api/auth/update-wallet', 
+      await axios.patch('https://recampus-backend.onrender.com/api/auth/update-wallet', 
         { walletAddress: address }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );

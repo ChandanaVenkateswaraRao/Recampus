@@ -148,7 +148,7 @@ const ItemsModule = () => {
     if (!sellerWallet) {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5000/api/auth/get-wallet/${sellerId}`, {
+        const res = await axios.get(`https://recampus-backend.onrender.com/api/auth/get-wallet/${sellerId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         sellerWallet = res.data.wallet;
@@ -178,7 +178,7 @@ const ItemsModule = () => {
       // D. Update Backend
       try {
         const token = localStorage.getItem('token');
-        const backendRes = await axios.post('http://localhost:5000/api/items/buy-crypto', {
+        const backendRes = await axios.post('https://recampus-backend.onrender.com/api/items/buy-crypto', {
           itemId: item._id,
           txHash: result.hash
         }, { headers: { Authorization: `Bearer ${token}` } });
