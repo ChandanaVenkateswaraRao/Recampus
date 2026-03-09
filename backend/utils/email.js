@@ -1,20 +1,17 @@
 const axios = require("axios");
 
 const sendEmail = async ({ to, subject, text, html }) => {
+
   try {
 
-    const response = await axios.post(
+    const res = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
           name: "ReCampus Support",
           email: "noreply@recampus.app"
         },
-        to: [
-          {
-            email: to
-          }
-        ],
+        to: [{ email: to }],
         subject: subject,
         textContent: text,
         htmlContent: html
@@ -27,9 +24,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
       }
     );
 
-    console.log("Email sent successfully:", response.data);
-
-    return response.data;
+    console.log("Email sent:", res.data);
 
   } catch (error) {
 
@@ -38,6 +33,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
     throw new Error("Failed to send email");
 
   }
+
 };
 
 module.exports = sendEmail;

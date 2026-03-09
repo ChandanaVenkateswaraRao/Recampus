@@ -117,6 +117,10 @@ export default function RideScreen() {
   const [dynamicQuote, setDynamicQuote] = useState<DynamicQuote | null>(null);
   const [previewPath, setPreviewPath] = useState<{ latitude: number; longitude: number }[]>([]);
 
+  const [ridePath, setRidePath] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [captainPath, setCaptainPath] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [captainLocation, setCaptainLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
   const [captainOnline, setCaptainOnline] = useState(false);
   const [incomingRequests, setIncomingRequests] = useState<RideRequest[]>([]);
@@ -178,6 +182,64 @@ export default function RideScreen() {
     setRefreshing(true);
     await loadData();
   };
+
+  useEffect(() => {
+
+  if (panelRole !== "captain") return;
+
+  let subscription: any;
+
+  (async () => {
+
+    const perm = await Location.requestForegroundPermissionsAsync();
+    if (perm.status !== "granted") return;
+
+    subscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        distanceInterval: 10,
+      },
+      (loc) => {
+
+        const point = {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
+
+        setCaptainLocation(point);
+
+      }
+    );
+
+  })();
+
+  return () => {
+    subscription?.remove();
+  };
+
+}, [panelRole]);
+
+  useEffect(() => {
+
+  if (!captainLocation || !pickupPoint) return;
+
+  fetchCaptainRoute(captainLocation, pickupPoint);
+
+}, [captainLocation, pickupPoint]);
+
+  useEffect(() => {
+
+  if (!activeRide) return;
+
+  if ((activeRide as any).polyline) {
+
+    const decoded = decodePolyline((activeRide as any).polyline);
+
+    setRidePath(decoded);
+
+  }
+
+}, [activeRide]);
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
@@ -247,6 +309,33 @@ export default function RideScreen() {
     }
     Alert.alert('Saved', 'Destination saved.');
   };
+
+  const fetchCaptainRoute = async (captain: any, pickup: any) => {
+
+  try {
+
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${captain.longitude},${captain.latitude};${pickup.longitude},${pickup.latitude}` +
+      `?overview=full&geometries=geojson`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const coords = data.routes[0].geometry.coordinates;
+
+    const route = coords.map((c: any) => ({
+      latitude: c[1],
+      longitude: c[0],
+    }));
+
+    setCaptainPath(route);
+
+  } catch (err) {
+    console.log("Captain route error", err);
+  }
+
+};
 
   const estimateFare = async () => {
     const pickup = pickupText.trim();
@@ -494,15 +583,52 @@ export default function RideScreen() {
 
       <View style={{ marginHorizontal: 12, marginBottom: 10 }}>
         <MapView
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          initialRegion={KARE_CENTER}
-          onPress={onMapPress}
-        >
-          {pickupPoint && <Marker coordinate={pickupPoint} title="Pickup" pinColor="#059669" />}
-          {dropPoint && <Marker coordinate={dropPoint} title="Destination" pinColor="#dc2626" />}
-          {previewPath.length > 1 && <Polyline coordinates={previewPath} strokeColor="#1d4ed8" strokeWidth={4} />}
-        </MapView>
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            initialRegion={KARE_CENTER}
+            onPress={onMapPress}
+          >
+
+            {pickupPoint && (
+              <Marker coordinate={pickupPoint} title="Pickup" pinColor="#059669" />
+            )}
+
+            {dropPoint && (
+              <Marker coordinate={dropPoint} title="Destination" pinColor="#dc2626" />
+            )}
+
+            {captainLocation && (
+              <Marker coordinate={captainLocation} title="Captain" pinColor="#000" />
+            )}
+
+            {/* Captain → Pickup */}
+            {captainPath.length > 1 && (
+              <Polyline
+                coordinates={captainPath}
+                strokeColor="#111827"
+                strokeWidth={4}
+              />
+            )}
+
+            {/* Pickup → Drop */}
+            {ridePath.length > 1 && (
+              <Polyline
+                coordinates={ridePath}
+                strokeColor="#2563eb"
+                strokeWidth={5}
+              />
+            )}
+
+            {/* Preview route */}
+            {previewPath.length > 1 && (
+              <Polyline
+                coordinates={previewPath}
+                strokeColor="#1d4ed8"
+                strokeWidth={4}
+              />
+            )}
+
+          </MapView>
       </View>
 
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
