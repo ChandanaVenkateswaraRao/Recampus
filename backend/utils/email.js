@@ -25,9 +25,9 @@ const sendEmail = async ({ to, subject, text, html }) => {
     );
 
     console.log("Email sent:", res.data);
-
+    
   } catch (error) {
-
+    console.log("Brevo API Key:", process.env.BREVO_API_KEY);
     console.error("Email sending error:", error.response?.data || error.message);
 
     throw new Error("Failed to send email");
