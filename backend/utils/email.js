@@ -1,26 +1,20 @@
 const nodemailer = require("nodemailer");
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.warn("EMAIL_USER or EMAIL_PASS not set in environment variables");
-}
-
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
-  family: 4,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS
   }
 });
 
 const sendEmail = async ({ to, subject, text, html }) => {
-
   try {
 
     const mailOptions = {
-      from: `"ReCampus Support" <${process.env.EMAIL_USER}>`,
+      from: '"ReCampus Support" <noreply@recampus.app>',
       to,
       subject,
       text,
@@ -40,7 +34,6 @@ const sendEmail = async ({ to, subject, text, html }) => {
     throw new Error("Failed to send email");
 
   }
-
 };
 
 module.exports = sendEmail;
