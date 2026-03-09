@@ -695,6 +695,8 @@ const RideModule = ({ user }) => {
 
       const path = decodePolyline(routeRes.data?.polyline);
 
+      quote.polyline = routeRes.data?.polyline;
+
       setDynamicQuote(quote);
       setPreviewPath(path);
       return quote;
@@ -872,6 +874,23 @@ const RideModule = ({ user }) => {
 
     previousRideStatusRef.current = nextStatus;
   }, [activeRide?.status, role, pushRideAlert]);
+
+  useEffect(() => {
+  setDynamicQuote(null);
+  setPreviewPath([]);
+}, [customRoute.start, customRoute.end]);
+
+// Restore route polyline when ride loads (for captain or passenger refresh)
+useEffect(() => {
+  if (activeRide?.polyline) {
+    console.log("Restoring ride polyline:", activeRide.polyline);
+
+    const decoded = decodePolyline(activeRide.polyline);
+    console.log("Decoded path points:", decoded.length);
+
+    setPreviewPath(decoded);
+  }
+}, [activeRide]);
 
   useEffect(() => {
     return () => {
@@ -1546,14 +1565,15 @@ const RideModule = ({ user }) => {
                 const quote = dynamicQuote || (await estimateDynamicRide());
                 if (!quote) return;
                 requestRide({
-                  type: rideMode,
-                  route: quote.route,
-                  price: quote.fare,
-                  distanceKm: quote.distanceKm,
-                  pickupLocation: quote.pickupLocation,
-                  dropLocation: quote.dropLocation,
-                  ...(rideMode === 'pre-booking' ? { scheduledAt: scheduleAt } : {})
-                });
+                type: rideMode,
+                route: quote.route,
+                price: quote.fare,
+                distanceKm: quote.distanceKm,
+                pickupLocation: quote.pickupLocation,
+                dropLocation: quote.dropLocation,
+                polyline: quote.polyline || "",
+                ...(rideMode === 'pre-booking' ? { scheduledAt: scheduleAt } : {})
+              });
               }}
             >
               {submitting ? <Loader2 className="spin" size={16} /> : rideMode === 'pre-booking' ? 'Confirm Pre-Book Ride' : 'Book On-Spot Ride'}
@@ -1562,6 +1582,8 @@ const RideModule = ({ user }) => {
         </div>
       );
     }
+
+   
 
     if (activeRide.status === 'scheduled') {
       return (
@@ -1688,6 +1710,8 @@ const RideModule = ({ user }) => {
     return null;
   };
 
+  
+
   const renderCaptain = () => {
     if (!canCaptain) {
       return (
@@ -1775,6 +1799,15 @@ const RideModule = ({ user }) => {
       );
     }
 
+    // useEffect(() => {
+    //   if (activeRide?.polyline) {
+    //     setPreviewPath(decodePolyline(activeRide.polyline));
+    //   }
+    // }, [activeRide]);
+
+    console.log("ACTIVE RIDE:", activeRide);
+console.log("ACTIVE POLYLINE:", activeRide?.polyline);
+console.log("PREVIEW PATH LENGTH:", previewPath.length);
     return (
       <div className="ride-panel-body fade-in">
         {renderRideProgress(activeRide.status)}
