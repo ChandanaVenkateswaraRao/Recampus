@@ -7,21 +7,22 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.BREVO_USER,
     pass: process.env.BREVO_PASS
-  }
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000
 });
 
 const sendEmail = async ({ to, subject, text, html }) => {
+
   try {
 
-    const mailOptions = {
+    const info = await transporter.sendMail({
       from: '"ReCampus Support" <noreply@recampus.app>',
       to,
       subject,
       text,
       html
-    };
-
-    const info = await transporter.sendMail(mailOptions);
+    });
 
     console.log("Email sent:", info.messageId);
 
@@ -34,8 +35,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
     throw new Error("Failed to send email");
 
   }
+
 };
 
 module.exports = sendEmail;
-
-
