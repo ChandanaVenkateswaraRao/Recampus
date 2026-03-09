@@ -1,50 +1,43 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_USER,
-    pass: process.env.BREVO_PASS
-  },
-  connectionTimeout: 15000,
-  greetingTimeout: 15000
-});
+const axios = require("axios");
 
 const sendEmail = async ({ to, subject, text, html }) => {
-
   try {
 
-    const info = await transporter.sendMail({
-      from: '"ReCampus Support" <noreply@recampus.app>',
-      to,
-      subject,
-      text,
-      html
-    });
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "ReCampus Support",
+          email: "noreply@recampus.app"
+        },
+        to: [
+          {
+            email: to
+          }
+        ],
+        subject: subject,
+        textContent: text,
+        htmlContent: html
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
-    console.log("Email sent:", info.messageId);
+    console.log("Email sent successfully:", response.data);
 
-    return info;
+    return response.data;
 
   } catch (error) {
 
-    console.error("Email sending error:", error);
+    console.error("Email sending error:", error.response?.data || error.message);
 
     throw new Error("Failed to send email");
 
   }
-
 };
-
-
-transporter.verify(function (error, success) {
-  if (error) {
-    console.error("SMTP connection error:", error);
-  } else {
-    console.log("SMTP server ready");
-  }
-});
 
 module.exports = sendEmail;
